@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:14
+    environment:
+      - POSTGRES_DB=tradeshipdb
+      - POSTGRES_USER=jcroot
+      - POSTGRES_PASSWORD=changeme!
+    volumes:
+      - "tradeship_pgsql:/var/lib/postgresql/data"
+    ports:
+      - "5432:5432"
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "tradeshipdb", "-U", "jcroot"]
+      retries: 3
+      timeout: 5s
+
+  mailhog:
+    image: "mailhog/mailhog:latest"
+    platform: linux/amd64
+    ports:
+      - 1025:1025
+      - 8025:8025
+    networks:
+      - default
+
+networks:
+  default:
+    driver: bridge
+volumes:
+  tradeship_pgsql:
+    driver: local

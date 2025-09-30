@@ -1,0 +1,781 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User and Authentication Models
+model User {
+  id               String    @id @default(uuid())
+  email            String    @unique
+  username         String    @unique
+  firstName        String
+  lastName         String
+  password         String
+  isActive         Boolean   @default(true)
+  agreesToTerms    Boolean   @default(false)
+  termsAgreedAt    DateTime?
+  termsVersion     String    @default("1.0")
+  profileCompleted Boolean   @default(false)
+  dateJoined       DateTime  @default(now())
+  lastLogin        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  profile               UserProfile?
+  wallet                UserWallet?
+  paymentMethods        PaymentMethod[]
+  bankAccounts          BankAccount[]
+  shippingAddresses     ShippingAddress[]
+  shippingPreferences   ShippingPreferences?
+  paymentShippingSetup  PaymentShippingSetup?
+  termsAgreements       TermsAgreement[]
+  items                 Item[]
+  tradesOffering        Trade[]                      @relation("TraderOffering")
+  tradesReceiving       Trade[]                      @relation("TraderReceiving")
+  reviewsGiven          Review[]                     @relation("Reviewer")
+  reviewsReceived       Review[]                     @relation("ReviewedTrader")
+  ratingsGiven          TradeRating[]                @relation("Rater")
+  ratingsReceived       TradeRating[]                @relation("RatedTrader")
+  notificationsReceived Notification[]               @relation("Recipient")
+  notificationsSent     Notification[]               @relation("Sender")
+  notificationSettings  NotificationUserSettings[]
+  conversationsCreated  Conversation[]               @relation("CreatedBy")
+  chatParticipants      ChatParticipant[]            @relation("ChatParticipant")
+  chatAddedBy           ChatParticipant[]            @relation("ChatAddedBy")
+  chatMessagesSent      ChatMessage[]                @relation("Sender")
+  batchRecipients       NotificationBatchRecipient[]
+
+  @@index([email])
+  @@index([agreesToTerms])
+  @@index([profileCompleted])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model UserProfile {
+  id                 String     @id @default(uuid())
+  userId             String     @unique
+  phoneNumber        String?
+  dateOfBirth        DateTime?
+  bio                String?
+  avatar             String?
+  emailNotifications Boolean    @default(true)
+  marketingEmails    Boolean    @default(false)
+  city               String?
+  state              String?
+  country            String     @default("United States")
+  traderSince        DateTime   @default(now())
+  tradingRating      Decimal    @default(0.00) @db.Decimal(3, 2)
+  totalTrades        Int        @default(0)
+  successfulTrades   Int        @default(0)
+  isVerifiedTrader   Boolean    @default(false)
+  traderTier         TraderTier @default(BRONZE)
+  specialties        String?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  // Relations
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interests Interest[] @relation("UserInterests")
+
+  @@index([userId])
+  @@index([city, state])
+  @@index([createdAt])
+  @@map("user_profiles")
+}
+
+enum TraderTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+// Interest/Tag Model
+model Interest {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  color       String   @default("#007bff")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users UserProfile[] @relation("UserInterests")
+  items Item[]        @relation("ItemInterests")
+
+  @@index([name])
+  @@index([isActive])
+  @@map("interests")
+}
+
+// Notification System Models
+model NotificationType {
+  id                  String               @id @default(uuid())
+  name                String               @unique
+  displayName         String
+  description         String?
+  isActive            Boolean              @default(true)
+  requiresAction      Boolean              @default(false)
+  autoMarkRead        Boolean              @default(false)
+  defaultEmailEnabled Boolean              @default(true)
+  defaultPushEnabled  Boolean              @default(true)
+  defaultInAppEnabled Boolean              @default(true)
+  priority            NotificationPriority @default(NORMAL)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  // Relations
+  notifications Notification[]
+  userSettings  NotificationUserSettings[]
+  batches       NotificationBatch[]
+
+  @@index([name])
+  @@index([isActive])
+  @@index([priority])
+  @@map("notification_types")
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model NotificationUserSettings {
+  id                 String   @id @default(uuid())
+  userId             String
+  notificationTypeId String
+  emailEnabled       Boolean  @default(true)
+  pushEnabled        Boolean  @default(true)
+  inAppEnabled       Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notificationType NotificationType @relation(fields: [notificationTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, notificationTypeId])
+  @@index([userId])
+  @@index([notificationTypeId])
+  @@map("notification_user_settings")
+}
+
+model Notification {
+  id                 String    @id @default(uuid())
+  recipientId        String
+  senderId           String?
+  notificationTypeId String
+  title              String
+  message            String
+  contentType        String?
+  objectId           String?
+  isRead             Boolean   @default(false)
+  readAt             DateTime?
+  emailSent          Boolean   @default(false)
+  emailSentAt        DateTime?
+  pushSent           Boolean   @default(false)
+  pushSentAt         DateTime?
+  metadata           Json      @default("{}")
+  actionUrl          String?
+  expiresAt          DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  // Relations
+  recipient        User                         @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  sender           User?                        @relation("Sender", fields: [senderId], references: [id], onDelete: SetNull)
+  notificationType NotificationType             @relation(fields: [notificationTypeId], references: [id], onDelete: Cascade)
+  batchRecipients  NotificationBatchRecipient[]
+
+  @@index([recipientId, createdAt])
+  @@index([recipientId, isRead])
+  @@index([notificationTypeId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@index([expiresAt])
+  @@map("notifications")
+}
+
+model NotificationBatch {
+  id                 String      @id @default(uuid())
+  name               String
+  notificationTypeId String
+  status             BatchStatus @default(PENDING)
+  titleTemplate      String
+  messageTemplate    String
+  scheduledFor       DateTime?
+  totalRecipients    Int         @default(0)
+  sentCount          Int         @default(0)
+  failedCount        Int         @default(0)
+  createdAt          DateTime    @default(now())
+  startedAt          DateTime?
+  completedAt        DateTime?
+
+  // Relations
+  notificationType NotificationType             @relation(fields: [notificationTypeId], references: [id], onDelete: Cascade)
+  recipients       NotificationBatchRecipient[]
+
+  @@index([status])
+  @@index([scheduledFor])
+  @@index([createdAt])
+  @@map("notification_batches")
+}
+
+enum BatchStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model NotificationBatchRecipient {
+  id             String          @id @default(uuid())
+  batchId        String
+  recipientId    String
+  notificationId String?
+  status         RecipientStatus @default(PENDING)
+  errorMessage   String?
+  sentAt         DateTime?
+
+  // Relations
+  batch        NotificationBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  recipient    User              @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  notification Notification?     @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@unique([batchId, recipientId])
+  @@index([batchId])
+  @@index([recipientId])
+  @@index([status])
+  @@map("notification_batch_recipients")
+}
+
+enum RecipientStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+// Chat System Models
+model Conversation {
+  id                   String           @id @default(uuid())
+  conversationType     ConversationType @default(DIRECT)
+  title                String?
+  description          String?
+  createdById          String
+  contentType          String?
+  objectId             String?
+  isActive             Boolean          @default(true)
+  isArchived           Boolean          @default(false)
+  isPrivate            Boolean          @default(true)
+  allowNewParticipants Boolean          @default(false)
+  lastMessageAt        DateTime?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  // Relations
+  createdBy    User              @relation("CreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  participants ChatParticipant[]
+  messages     ChatMessage[]
+
+  @@index([conversationType])
+  @@index([createdById])
+  @@index([isActive])
+  @@index([lastMessageAt])
+  @@index([contentType, objectId])
+  @@map("conversations")
+}
+
+enum ConversationType {
+  DIRECT
+  GROUP
+  TRADE
+  SUPPORT
+}
+
+model ChatParticipant {
+  id             String          @id @default(uuid())
+  conversationId String
+  userId         String
+  role           ParticipantRole @default(MEMBER)
+  isActive       Boolean         @default(true)
+  isMuted        Boolean         @default(false)
+  addedById      String?
+  joinedAt       DateTime        @default(now())
+  leftAt         DateTime?
+  lastReadAt     DateTime?
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation("ChatParticipant", fields: [userId], references: [id], onDelete: Cascade)
+  addedBy      User?        @relation("ChatAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
+
+  @@unique([conversationId, userId])
+  @@index([conversationId, isActive])
+  @@index([userId, isActive])
+  @@index([lastReadAt])
+  @@map("chat_participants")
+}
+
+enum ParticipantRole {
+  MEMBER
+  ADMIN
+  OWNER
+}
+
+model ChatMessage {
+  id             String      @id @default(uuid())
+  conversationId String
+  senderId       String
+  messageType    MessageType @default(TEXT)
+  content        String
+  file           String?
+  fileName       String?
+  fileSize       Int?
+  mimeType       String?
+  replyToId      String?
+  isEdited       Boolean     @default(false)
+  isDeleted      Boolean     @default(false)
+  deliveredAt    DateTime?
+  metadata       Json        @default("{}")
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Relations
+  conversation Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User          @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo      ChatMessage?  @relation("ReplyTo", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies      ChatMessage[] @relation("ReplyTo")
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+  @@index([messageType])
+  @@index([isDeleted])
+  @@index([replyToId])
+  @@map("chat_messages")
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  SYSTEM
+  TRADE_OFFER
+  LOCATION
+  STICKER
+}
+
+// Payment System Models
+model UserWallet {
+  id                     String   @id @default(uuid())
+  userId                 String   @unique
+  stripeCustomerId       String?
+  availableBalance       Decimal  @default(0.00) @db.Decimal(10, 2)
+  escrowBalance          Decimal  @default(0.00) @db.Decimal(10, 2)
+  totalDeposited         Decimal  @default(0.00) @db.Decimal(12, 2)
+  totalWithdrawn         Decimal  @default(0.00) @db.Decimal(12, 2)
+  totalShippingPaid      Decimal  @default(0.00) @db.Decimal(10, 2)
+  withdrawalLimitDaily   Decimal  @default(1000.00) @db.Decimal(8, 2)
+  withdrawalLimitMonthly Decimal  @default(10000.00) @db.Decimal(10, 2)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  // Relations
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  @@index([userId])
+  @@index([stripeCustomerId])
+  @@index([createdAt])
+  @@map("user_wallets")
+}
+
+model PaymentMethod {
+  id                    String      @id @default(uuid())
+  userId                String
+  stripePaymentMethodId String
+  paymentType           PaymentType
+  lastFour              String?
+  brand                 String?
+  isDefault             Boolean     @default(false)
+  isActive              Boolean     @default(true)
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  // Relations
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  @@index([userId])
+  @@index([stripePaymentMethodId])
+  @@index([isDefault])
+  @@map("payment_methods")
+}
+
+enum PaymentType {
+  CARD
+  PAYPAL
+  BANK_ACCOUNT
+}
+
+model BankAccount {
+  id                    String   @id @default(uuid())
+  userId                String
+  stripeBankAccountId   String
+  bankName              String
+  accountHolderName     String
+  lastFour              String
+  routingNumberLastFour String
+  isVerified            Boolean  @default(false)
+  isDefault             Boolean  @default(false)
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([stripeBankAccountId])
+  @@index([isDefault])
+  @@map("bank_accounts")
+}
+
+model WalletTransaction {
+  id                    String            @id @default(uuid())
+  walletId              String
+  transactionType       TransactionType
+  amount                Decimal           @db.Decimal(10, 2)
+  status                TransactionStatus @default(PENDING)
+  description           String?
+  stripePaymentIntentId String?
+  stripeChargeId        String?
+  paymentMethodId       String?
+  tradeId               String?
+  platformFee           Decimal           @default(0.00) @db.Decimal(8, 2)
+  stripeFee             Decimal           @default(0.00) @db.Decimal(8, 2)
+  balanceBefore         Decimal?          @db.Decimal(10, 2)
+  balanceAfter          Decimal?          @db.Decimal(10, 2)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  completedAt           DateTime?
+
+  // Relations
+  wallet        UserWallet     @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  paymentMethod PaymentMethod? @relation(fields: [paymentMethodId], references: [id], onDelete: SetNull)
+
+  @@index([walletId])
+  @@index([transactionType])
+  @@index([status])
+  @@index([stripePaymentIntentId])
+  @@index([tradeId])
+  @@index([createdAt])
+  @@map("wallet_transactions")
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  ESCROW_DEPOSIT
+  ESCROW_RELEASE
+  ESCROW_REFUND
+  SHIPPING_PAYMENT
+  TRADE_FEE
+  REFUND
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+// Trade System Models
+model Item {
+  id                  String   @id @default(uuid())
+  title               String
+  description         String
+  estimatedValue      Decimal  @db.Decimal(10, 2)
+  ownerId             String
+  isAvailableForTrade Boolean  @default(true)
+  tradePreferences    String?
+  minimumTradeValue   Decimal? @db.Decimal(10, 2)
+  acceptsCashOffers   Boolean  @default(true)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  owner             User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  interests         Interest[]       @relation("ItemInterests")
+  images            ItemImage[]
+  files             ItemFile[]
+  shippingDetails   ShippingDetails?
+  tradesAsOffered   Trade[]          @relation("ItemOffered")
+  tradesAsRequested Trade[]          @relation("ItemRequested")
+
+  @@index([ownerId])
+  @@index([isActive])
+  @@index([isAvailableForTrade])
+  @@map("items")
+}
+
+model ItemImage {
+  id        String   @id @default(uuid())
+  itemId    String
+  image     String
+  name      String
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@index([isPrimary])
+  @@map("item_images")
+}
+
+model ItemFile {
+  id          String   @id @default(uuid())
+  itemId      String
+  file        String
+  name        String
+  fileType    FileType @default(OTHER)
+  fileSize    Int?
+  mimeType    String?
+  description String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@index([fileType])
+  @@index([isPublic])
+  @@map("item_files")
+}
+
+enum FileType {
+  IMAGE
+  DOCUMENT
+  CERTIFICATE
+  MANUAL
+  RECEIPT
+  WARRANTY
+  VIDEO
+  AUDIO
+  OTHER
+}
+
+model ShippingDetails {
+  id             String   @id @default(uuid())
+  itemId         String   @unique
+  shippingWeight Decimal  @db.Decimal(8, 2)
+  length         Decimal  @db.Decimal(6, 2)
+  width          Decimal  @db.Decimal(6, 2)
+  height         Decimal  @db.Decimal(6, 2)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@map("shipping_details")
+}
+
+model ShippingAddress {
+  id           String   @id @default(uuid())
+  userId       String
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  zipCode      String
+  country      String   @default("United States")
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isDefault])
+  @@map("shipping_addresses")
+}
+
+model ShippingPreferences {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  preferredCarrier Carrier  @default(USPS)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("shipping_preferences")
+}
+
+enum Carrier {
+  USPS
+  UPS
+  FEDEX
+  DHL
+  OTHER
+}
+
+model PaymentShippingSetup {
+  id             String         @id @default(uuid())
+  userId         String         @unique
+  shippingMethod ShippingMethod @default(STANDARD)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("payment_shipping_setups")
+}
+
+enum ShippingMethod {
+  STANDARD
+  EXPEDITED
+  OVERNIGHT
+  PICKUP
+}
+
+model TermsAgreement {
+  id                     String   @id @default(uuid())
+  userId                 String
+  itemDetailsAccurate    Boolean  @default(false)
+  agreesToTerms          Boolean  @default(false)
+  agreesToEscrow         Boolean  @default(false)
+  understandsFundRelease Boolean  @default(false)
+  ipAddress              String?
+  userAgent              String?
+  termsVersion           String   @default("1.0")
+  createdAt              DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([termsVersion])
+  @@map("terms_agreements")
+}
+
+model Trade {
+  id                  String      @id @default(uuid())
+  traderOfferingId    String
+  traderReceivingId   String
+  itemOfferedId       String
+  itemRequestedId     String?
+  cashAmount          Decimal?    @db.Decimal(10, 2)
+  status              TradeStatus @default(PENDING)
+  notes               String?
+  escrowReference     String?
+  estimatedCompletion DateTime?
+  createdAt           DateTime    @default(now())
+  acceptedAt          DateTime?
+  completedAt         DateTime?
+  cancelledAt         DateTime?
+
+  // Relations
+  traderOffering  User          @relation("TraderOffering", fields: [traderOfferingId], references: [id], onDelete: Cascade)
+  traderReceiving User          @relation("TraderReceiving", fields: [traderReceivingId], references: [id], onDelete: Cascade)
+  itemOffered     Item          @relation("ItemOffered", fields: [itemOfferedId], references: [id], onDelete: Cascade)
+  itemRequested   Item?         @relation("ItemRequested", fields: [itemRequestedId], references: [id], onDelete: Cascade)
+  reviews         Review[]
+  ratings         TradeRating[]
+
+  @@index([traderOfferingId])
+  @@index([traderReceivingId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("trades")
+}
+
+enum TradeStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  IN_ESCROW
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+model Review {
+  id               String   @id @default(uuid())
+  tradeId          String
+  reviewerId       String
+  reviewedTraderId String
+  rating           Int
+  description      String
+  wouldTradeAgain  Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  trade          Trade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  reviewer       User  @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewedTrader User  @relation("ReviewedTrader", fields: [reviewedTraderId], references: [id], onDelete: Cascade)
+
+  @@unique([tradeId, reviewerId])
+  @@index([tradeId])
+  @@index([reviewerId])
+  @@index([reviewedTraderId])
+  @@index([rating])
+  @@index([createdAt])
+  @@map("reviews")
+}
+
+model TradeRating {
+  id                  String   @id @default(uuid())
+  tradeId             String
+  raterId             String
+  ratedTraderId       String
+  communicationRating Int
+  itemConditionRating Int
+  shippingRating      Int
+  overallRating       Int
+  feedback            String?
+  wouldTradeAgain     Boolean  @default(true)
+  createdAt           DateTime @default(now())
+
+  // Relations
+  trade       Trade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  rater       User  @relation("Rater", fields: [raterId], references: [id], onDelete: Cascade)
+  ratedTrader User  @relation("RatedTrader", fields: [ratedTraderId], references: [id], onDelete: Cascade)
+
+  @@unique([tradeId, raterId])
+  @@index([ratedTraderId])
+  @@index([overallRating])
+  @@index([createdAt])
+  @@map("trade_ratings")
+}

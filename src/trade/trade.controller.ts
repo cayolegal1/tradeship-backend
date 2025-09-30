@@ -1,0 +1,268 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
+import { TradeService } from './trade.service';
+import { CreateItemDto } from './dto/create-item.dto';
+import { CreateTradeDto } from './dto/create-trade.dto';
+import { CreateReviewDto } from './dto/create-review.dto';
+import { CreateTradeRatingDto } from './dto/create-rating.dto';
+import { ItemResponseDto, InterestResponseDto } from './dto/item-response.dto';
+import { TradeResponseDto, ReviewResponseDto, TradeRatingResponseDto } from './dto/trade-response.dto';
+import { PaginationDto, PaginatedResponseDto } from '../common/dto/pagination.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { SuccessResponseDto } from '../common/dto/response.dto';
+
+@ApiTags('Trading')
+@Controller('trade')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+export class TradeController {
+  constructor(private readonly tradeService: TradeService) {}
+
+  // Interest Management
+  @Get('interests')
+  @ApiOperation({ summary: 'Get all available interests' })
+  @ApiResponse({ status: 200, description: 'Interests retrieved', type: [InterestResponseDto] })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getInterests(): Promise<InterestResponseDto[]> {
+    return this.tradeService.getInterests();
+  }
+
+  @Post('interests')
+  @ApiOperation({ summary: 'Create a new interest' })
+  @ApiResponse({ status: 201, description: 'Interest created successfully', type: InterestResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async createInterest(
+    @Body() body: { name: string; description?: string; color?: string },
+  ): Promise<InterestResponseDto> {
+    return this.tradeService.createInterest(body.name, body.description, body.color);
+  }
+
+  // Item Management
+  @Post('items')
+  @ApiOperation({ summary: 'Create a new item' })
+  @ApiResponse({ status: 201, description: 'Item created successfully', type: ItemResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async createItem(
+    @CurrentUser() user: any,
+    @Body() createItemDto: CreateItemDto,
+  ): Promise<ItemResponseDto> {
+    return this.tradeService.createItem(user.id, createItemDto);
+  }
+
+  @Get('items')
+  @ApiOperation({ summary: 'Get all available items with pagination' })
+  @ApiResponse({ status: 200, description: 'Items retrieved successfully', type: PaginatedResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page' })
+  async getItems(@Query() paginationDto: PaginationDto): Promise<PaginatedResponseDto<ItemResponseDto>> {
+    return this.tradeService.getItems(paginationDto);
+  }
+
+  @Get('items/:id')
+  @ApiOperation({ summary: 'Get item by ID' })
+  @ApiResponse({ status: 200, description: 'Item retrieved', type: ItemResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Item not found' })
+  async getItemById(@Param('id') itemId: string): Promise<ItemResponseDto> {
+    return this.tradeService.getItemById(itemId);
+  }
+
+  @Get('items/my')
+  @ApiOperation({ summary: 'Get current user items with pagination' })
+  @ApiResponse({ status: 200, description: 'User items retrieved successfully', type: PaginatedResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page' })
+  async getUserItems(
+    @CurrentUser() user: any,
+    @Query() paginationDto: PaginationDto,
+  ): Promise<PaginatedResponseDto<ItemResponseDto>> {
+    return this.tradeService.getUserItems(user.id, paginationDto);
+  }
+
+  @Put('items/:id')
+  @ApiOperation({ summary: 'Update item' })
+  @ApiResponse({ status: 200, description: 'Item updated successfully', type: ItemResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Item not found' })
+  async updateItem(
+    @CurrentUser() user: any,
+    @Param('id') itemId: string,
+    @Body() updateData: Partial<CreateItemDto>,
+  ): Promise<ItemResponseDto> {
+    return this.tradeService.updateItem(user.id, itemId, updateData);
+  }
+
+  @Delete('items/:id')
+  @ApiOperation({ summary: 'Delete item' })
+  @ApiResponse({ status: 200, description: 'Item deleted successfully', type: SuccessResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Item not found' })
+  async deleteItem(
+    @CurrentUser() user: any,
+    @Param('id') itemId: string,
+  ): Promise<SuccessResponseDto> {
+    const result = await this.tradeService.deleteItem(user.id, itemId);
+    return new SuccessResponseDto(result.message);
+  }
+
+  // Trade Management
+  @Post('trades')
+  @ApiOperation({ summary: 'Create a new trade' })
+  @ApiResponse({ status: 201, description: 'Trade created successfully', type: TradeResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async createTrade(
+    @CurrentUser() user: any,
+    @Body() createTradeDto: CreateTradeDto,
+  ): Promise<TradeResponseDto> {
+    return this.tradeService.createTrade(user.id, createTradeDto);
+  }
+
+  @Get('trades')
+  @ApiOperation({ summary: 'Get user trades with pagination' })
+  @ApiResponse({ status: 200, description: 'Trades retrieved successfully', type: PaginatedResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page' })
+  async getTrades(
+    @CurrentUser() user: any,
+    @Query() paginationDto: PaginationDto,
+  ): Promise<PaginatedResponseDto<TradeResponseDto>> {
+    return this.tradeService.getTrades(user.id, paginationDto);
+  }
+
+  @Get('trades/:id')
+  @ApiOperation({ summary: 'Get trade by ID' })
+  @ApiResponse({ status: 200, description: 'Trade retrieved', type: TradeResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Trade not found' })
+  async getTradeById(
+    @CurrentUser() user: any,
+    @Param('id') tradeId: string,
+  ): Promise<TradeResponseDto> {
+    return this.tradeService.getTradeById(tradeId, user.id);
+  }
+
+  @Post('trades/:id/accept')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Accept a trade' })
+  @ApiResponse({ status: 200, description: 'Trade accepted successfully', type: SuccessResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Trade not found' })
+  async acceptTrade(
+    @CurrentUser() user: any,
+    @Param('id') tradeId: string,
+  ): Promise<SuccessResponseDto> {
+    const result = await this.tradeService.acceptTrade(tradeId, user.id);
+    return new SuccessResponseDto(result.message);
+  }
+
+  @Post('trades/:id/complete')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Complete a trade' })
+  @ApiResponse({ status: 200, description: 'Trade completed successfully', type: SuccessResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Trade not found' })
+  async completeTrade(
+    @CurrentUser() user: any,
+    @Param('id') tradeId: string,
+  ): Promise<SuccessResponseDto> {
+    const result = await this.tradeService.completeTrade(tradeId, user.id);
+    return new SuccessResponseDto(result.message);
+  }
+
+  @Post('trades/:id/cancel')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Cancel a trade' })
+  @ApiResponse({ status: 200, description: 'Trade cancelled successfully', type: SuccessResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Trade not found' })
+  async cancelTrade(
+    @CurrentUser() user: any,
+    @Param('id') tradeId: string,
+    @Body() body: { reason?: string },
+  ): Promise<SuccessResponseDto> {
+    const result = await this.tradeService.cancelTrade(tradeId, user.id, body.reason);
+    return new SuccessResponseDto(result.message);
+  }
+
+  // Review Management
+  @Post('reviews')
+  @ApiOperation({ summary: 'Create a trade review' })
+  @ApiResponse({ status: 201, description: 'Review created successfully', type: ReviewResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Trade not found' })
+  async createReview(
+    @CurrentUser() user: any,
+    @Body() createReviewDto: CreateReviewDto,
+  ): Promise<ReviewResponseDto> {
+    return this.tradeService.createReview(user.id, createReviewDto);
+  }
+
+  @Get('trades/:id/reviews')
+  @ApiOperation({ summary: 'Get trade reviews' })
+  @ApiResponse({ status: 200, description: 'Reviews retrieved', type: [ReviewResponseDto] })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Trade not found' })
+  async getTradeReviews(@Param('id') tradeId: string): Promise<ReviewResponseDto[]> {
+    return this.tradeService.getTradeReviews(tradeId);
+  }
+
+  // Rating Management
+  @Post('ratings')
+  @ApiOperation({ summary: 'Create a trade rating' })
+  @ApiResponse({ status: 201, description: 'Rating created successfully', type: TradeRatingResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Trade not found' })
+  async createTradeRating(
+    @CurrentUser() user: any,
+    @Body() createRatingDto: CreateTradeRatingDto,
+  ): Promise<TradeRatingResponseDto> {
+    return this.tradeService.createTradeRating(user.id, createRatingDto);
+  }
+
+  @Get('trades/:id/ratings')
+  @ApiOperation({ summary: 'Get trade ratings' })
+  @ApiResponse({ status: 200, description: 'Ratings retrieved', type: [TradeRatingResponseDto] })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Trade not found' })
+  async getTradeRatings(@Param('id') tradeId: string): Promise<TradeRatingResponseDto[]> {
+    return this.tradeService.getTradeRatings(tradeId);
+  }
+
+  @Get('health')
+  @ApiOperation({ summary: 'Trade service health check' })
+  @ApiResponse({ status: 200, description: 'Trade service is healthy' })
+  async healthCheck(): Promise<SuccessResponseDto> {
+    return new SuccessResponseDto('Trade API is running');
+  }
+}

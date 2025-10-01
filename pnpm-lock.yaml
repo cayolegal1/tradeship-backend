@@ -96,6 +96,9 @@ importers:
       '@nestjs/testing':
         specifier: ^10.0.0
         version: 10.4.20(@nestjs/common@10.4.20(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.1.14)(rxjs@7.8.2))(@nestjs/core@10.4.20)(@nestjs/platform-express@10.4.20)
+      '@prisma/cli':
+        specifier: ^2.20.1
+        version: 2.20.1
       '@types/bcrypt':
         specifier: ^5.0.2
         version: 5.0.2
@@ -114,6 +117,9 @@ importers:
       '@types/nodemailer':
         specifier: ^6.4.14
         version: 6.4.20
+      '@types/passport-jwt':
+        specifier: ^4.0.1
+        version: 4.0.1
       '@types/supertest':
         specifier: ^2.0.12
         version: 2.0.16
@@ -786,6 +792,12 @@ packages:
     resolution: {integrity: sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
 
+  '@prisma/cli@2.20.1':
+    resolution: {integrity: sha512-/yrNDyNXLETPre/pgXG/L9zER2nINiq+Eq8pALSCApiHZBW1QrksxL9fbbxaseoW6HBs0T4UQWemu378O2mUOw==}
+    engines: {node: '>=10.4'}
+    deprecated: 'Prisma CLI package was renamed to ''prisma''. Check it out here: https://www.npmjs.com/package/prisma'
+    hasBin: true
+
   '@prisma/client@5.22.0':
     resolution: {integrity: sha512-M0SVXfyHnQREBKxCgyo7sffrKttwE6R8PMq330MIUF0pTwjUhLbW84pFDlf06B27XyCR++VtjugEnIHdr07SVA==}
     engines: {node: '>=16.13'}
@@ -800,6 +812,9 @@ packages:
 
   '@prisma/engines-version@5.22.0-44.605197351a3c8bdd595af2d2a9bc3025bca48ea2':
     resolution: {integrity: sha512-2PTmxFR2yHW/eB3uqWtcgRcgAbG1rwG9ZriSvQw+nnb7c4uCr3RAcGMb6/zfE88SKlC1Nj2ziUvc96Z379mHgQ==}
+
+  '@prisma/engines@2.20.0-26.60ba6551f29b17d7d6ce479e5733c70d9c00860e':
+    resolution: {integrity: sha512-zOWETm7DTRvlwf/CekPNSeJe6EC5bn2IFexd74wM9zgBXCZo+1sMDuNGtCqIt4Rzv8CcimEgyzrEFVq0LPV8qg==}
 
   '@prisma/engines@5.22.0':
     resolution: {integrity: sha512-UNjfslWhAt06kVL3CjkuYpHAWSO6L4kDCVPegV6itt7nD1kSJavd3vhgAEhjglLJJKEdJ7oIqDJ+yHk6qO8gPA==}
@@ -1097,6 +1112,15 @@ packages:
 
   '@types/nodemailer@6.4.20':
     resolution: {integrity: sha512-uj83z0GqwqMUE6RI4EKptPlav0FYE6vpIlqJAnxzu+/sSezRdbH69rSBCMsdW6DdsCAzoFQZ52c2UIlhRVQYDA==}
+
+  '@types/passport-jwt@4.0.1':
+    resolution: {integrity: sha512-Y0Ykz6nWP4jpxgEUYq8NoVZeCQPo1ZndJLfapI249g1jHChvRfZRO/LS3tqu26YgAS/laI1qx98sYGz0IalRXQ==}
+
+  '@types/passport-strategy@0.2.38':
+    resolution: {integrity: sha512-GC6eMqqojOooq993Tmnmp7AUTbbQSgilyvpCYQjT+H6JfG/g6RGc7nXEniZlp0zyKJ0WUdOiZWLBZft9Yug1uA==}
+
+  '@types/passport@1.0.17':
+    resolution: {integrity: sha512-aciLyx+wDwT2t2/kJGJR2AEeBz0nJU4WuRX04Wu9Dqc5lSUtwu0WERPHYsLhF9PtseiAMPBGNUOtFjxZ56prsg==}
 
   '@types/qs@6.14.0':
     resolution: {integrity: sha512-eOunJqu0K1923aExK6y8p6fsihYEn/BYuQ4g0CxAAgFc4b/ZLN4CrsRZ55srTdqoiLzU2B2evC+apEIxprEzkQ==}
@@ -4605,6 +4629,10 @@ snapshots:
 
   '@pkgr/core@0.2.9': {}
 
+  '@prisma/cli@2.20.1':
+    dependencies:
+      '@prisma/engines': 2.20.0-26.60ba6551f29b17d7d6ce479e5733c70d9c00860e
+
   '@prisma/client@5.22.0(prisma@5.22.0)':
     optionalDependencies:
       prisma: 5.22.0
@@ -4612,6 +4640,8 @@ snapshots:
   '@prisma/debug@5.22.0': {}
 
   '@prisma/engines-version@5.22.0-44.605197351a3c8bdd595af2d2a9bc3025bca48ea2': {}
+
+  '@prisma/engines@2.20.0-26.60ba6551f29b17d7d6ce479e5733c70d9c00860e': {}
 
   '@prisma/engines@5.22.0':
     dependencies:
@@ -5051,6 +5081,20 @@ snapshots:
       '@types/node': 20.19.18
     transitivePeerDependencies:
       - aws-crt
+
+  '@types/passport-jwt@4.0.1':
+    dependencies:
+      '@types/jsonwebtoken': 9.0.5
+      '@types/passport-strategy': 0.2.38
+
+  '@types/passport-strategy@0.2.38':
+    dependencies:
+      '@types/express': 4.17.23
+      '@types/passport': 1.0.17
+
+  '@types/passport@1.0.17':
+    dependencies:
+      '@types/express': 4.17.23
 
   '@types/qs@6.14.0': {}
 

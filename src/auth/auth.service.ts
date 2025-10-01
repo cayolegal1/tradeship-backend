@@ -72,7 +72,7 @@ export class AuthService {
         firstName,
         lastName,
         email,
-        username,
+        username: username || firstName + lastName,
         password: hashedPassword,
         agreesToTerms,
         termsAgreedAt: agreesToTerms ? new Date() : null,

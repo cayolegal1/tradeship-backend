@@ -52,7 +52,7 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  @Get('me')
+  @Get('user')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user information' })

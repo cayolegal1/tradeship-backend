@@ -62,7 +62,7 @@ export class AuthController {
     return this.authService.getCurrentUser(user.id);
   }
 
-  @Put('me')
+  @Put('user')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update current user information' })
@@ -78,7 +78,7 @@ export class AuthController {
     return this.authService.updateUser(user.id, updateUserDto);
   }
 
-  @Patch('me')
+  @Patch('user')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Partially update current user information' })

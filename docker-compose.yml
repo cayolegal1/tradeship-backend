@@ -33,10 +33,10 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgresql://jcroot:changeme!@db:5432/tradeshipdb?schema=public
-      - JWT_SECRET=your-super-secret-jwt-key-here
+      - DATABASE_URL=postgresql://paolo:admin123@db:5432/tradeshipdb?schema=public
+      - JWT_SECRET=bd40bda70a2305eb1c49bbb959984af7777615add5811da3a40c6ac09cb08872bc85dfa8
+      - JWT_REFRESH_SECRET=bd40bda70a2305eb1c49bbb959984af7777615add5811da3a40c6ac09cb08872bc85dfa8
       - JWT_EXPIRES_IN=7d
-      - JWT_REFRESH_SECRET=your-super-secret-refresh-key-here
       - JWT_REFRESH_EXPIRES_IN=30d
       - EMAIL_HOST=mailhog
       - EMAIL_PORT=1025

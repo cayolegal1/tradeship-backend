@@ -5,14 +5,14 @@ import { Transform } from 'class-transformer';
 export class WithdrawalRequestDto {
   @ApiProperty({
     description: 'Amount to withdraw',
-    example: 50.00,
-    minimum: 1.00,
-    maximum: 10000.00,
+    example: 50.0,
+    minimum: 1.0,
+    maximum: 10000.0,
   })
   @Transform(({ value }) => parseFloat(value))
   @IsDecimal({ decimal_digits: '0,2' })
-  @Min(1.00)
-  @Max(10000.00)
+  @Min(1.0)
+  @Max(10000.0)
   amount: number;
 
   @ApiPropertyOptional({

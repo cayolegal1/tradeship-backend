@@ -121,7 +121,9 @@ export class ItemFileResponseDto {
   constructor(partial: Partial<ItemFileResponseDto>) {
     Object.assign(this, partial);
     this.fileSizeDisplay = this.getFileSizeDisplay();
-    this.isImage = this.fileType === 'IMAGE' || (this.mimeType && this.mimeType.startsWith('image/'));
+    this.isImage =
+      this.fileType === 'IMAGE' ||
+      (this.mimeType && this.mimeType.startsWith('image/'));
   }
 
   private getFileSizeDisplay(): string {
@@ -189,8 +191,8 @@ export class ShippingDetailsResponseDto {
   }
 
   private calculateShippingCost(): number {
-    const weightCost = this.shippingWeight * 0.50;
-    const volumeCost = this.volumeCubicInches * 0.10;
+    const weightCost = this.shippingWeight * 0.5;
+    const volumeCost = this.volumeCubicInches * 0.1;
     return Math.round((weightCost + volumeCost) * 100) / 100;
   }
 }

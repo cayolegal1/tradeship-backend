@@ -162,11 +162,13 @@ export class UserProfileResponseDto {
 
   constructor(partial: Partial<UserProfileResponseDto>) {
     Object.assign(this, partial);
-    this.successRate = this.totalTrades > 0 ? 
-      Math.round((this.successfulTrades / this.totalTrades) * 100 * 10) / 10 : 0;
-    this.traderStatus = this.isVerifiedTrader ? 
-      `Verified ${this.traderTier} Trader` : 
-      `${this.traderTier} Trader`;
+    this.successRate =
+      this.totalTrades > 0
+        ? Math.round((this.successfulTrades / this.totalTrades) * 100 * 10) / 10
+        : 0;
+    this.traderStatus = this.isVerifiedTrader
+      ? `Verified ${this.traderTier} Trader`
+      : `${this.traderTier} Trader`;
   }
 }
 

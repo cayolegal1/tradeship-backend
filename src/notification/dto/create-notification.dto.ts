@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsUUID, IsObject, IsUrl, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsUUID,
+  IsObject,
+  IsUrl,
+  IsDateString,
+} from 'class-validator';
 
 export class CreateNotificationDto {
   @ApiProperty({

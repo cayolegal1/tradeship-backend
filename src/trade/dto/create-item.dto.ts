@@ -1,5 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsDecimal, IsOptional, IsArray, IsUUID, MinLength, MaxLength, Min } from 'class-validator';
+import {
+  IsString,
+  IsDecimal,
+  IsOptional,
+  IsArray,
+  IsUUID,
+  MinLength,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreateItemDto {
@@ -50,7 +59,7 @@ export class CreateItemDto {
 
   @ApiPropertyOptional({
     description: 'Minimum trade value',
-    example: 500.00,
+    example: 500.0,
     minimum: 0.01,
   })
   @IsOptional()

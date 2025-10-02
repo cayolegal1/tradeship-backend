@@ -20,7 +20,12 @@ async function bootstrap() {
   );
 
   // CORS configuration
-  app.enableCors();
+  app.enableCors({
+    origin: true,
+    credentials: false,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['*'], 
+  });
 
   // API prefix
   app.setGlobalPrefix(process.env.API_PREFIX || 'api');
@@ -41,7 +46,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  
+
   console.log(`🚀 TradeShip API is running on: http://localhost:${port}`);
   console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
 }

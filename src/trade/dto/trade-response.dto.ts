@@ -72,8 +72,11 @@ export class TradeResponseDto {
 
   constructor(partial: Partial<TradeResponseDto>) {
     Object.assign(this, partial);
-    this.isActive = this.status === 'PENDING' || this.status === 'ACCEPTED' || 
-                   this.status === 'IN_PROGRESS' || this.status === 'IN_ESCROW';
+    this.isActive =
+      this.status === 'PENDING' ||
+      this.status === 'ACCEPTED' ||
+      this.status === 'IN_PROGRESS' ||
+      this.status === 'IN_ESCROW';
     this.totalValue = this.calculateTotalValue();
     this.tradeSummary = this.generateTradeSummary();
   }
@@ -200,6 +203,11 @@ export class TradeRatingResponseDto {
       this.shippingRating,
       this.overallRating,
     ];
-    return Math.round((ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length) * 10) / 10;
+    return (
+      Math.round(
+        (ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length) *
+          10,
+      ) / 10
+    );
   }
 }

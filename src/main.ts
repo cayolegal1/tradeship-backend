@@ -19,13 +19,13 @@ async function bootstrap() {
     }),
   );
 
-  // CORS configuration
-  app.enableCors({
-    origin: true,
-    credentials: false,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['*'], 
-  });
+  // // CORS configuration
+  // app.enableCors({
+  //   origin: true,
+  //   credentials: false,
+  //   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  //   allowedHeaders: ['*'], 
+  // });
 
   // API prefix
   app.setGlobalPrefix(process.env.API_PREFIX || 'api');

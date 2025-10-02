@@ -20,10 +20,7 @@ async function bootstrap() {
   );
 
   // CORS configuration
-  app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-    credentials: true,
-  });
+  app.enableCors();
 
   // API prefix
   app.setGlobalPrefix(process.env.API_PREFIX || 'api');

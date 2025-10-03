@@ -35,7 +35,10 @@ export class AuthService {
     });
   }
 
-  async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
+  async register(
+    registerDto: RegisterDto,
+    response: Response,
+  ): Promise<AuthResponseDto> {
     const {
       firstName,
       lastName,
@@ -96,6 +99,14 @@ export class AuthService {
     // Get updated user with profile
     const userWithProfile = await this.getUserWithProfile(user.id);
 
+    // Set cookie for frontend
+    response.cookie('jwt', tokens.accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      priority: 'high',
+    });
+
     return {
       user: userWithProfile,
       tokens,
@@ -144,6 +155,7 @@ export class AuthService {
     // Get user with profile
     const userWithProfile = await this.getUserWithProfile(user.id);
 
+    // Set cookie for frontend
     response.cookie('jwt', tokens.accessToken, {
       httpOnly: true,
       secure: true,
@@ -156,6 +168,17 @@ export class AuthService {
       tokens,
       message: 'Login successful',
     };
+  }
+
+  async logout(response: Response) {
+    response.clearCookie('jwt', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      priority: 'high',
+    });
+
+    return { message: 'Logged out' };
   }
 
   async getCurrentUser(userId: number): Promise<UserWithProfileResponseDto> {

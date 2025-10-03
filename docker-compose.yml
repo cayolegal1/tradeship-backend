@@ -16,15 +16,6 @@ services:
       retries: 3
       timeout: 5s
 
-  mailhog:
-    image: "mailhog/mailhog:latest"
-    platform: linux/amd64
-    ports:
-      - 1025:1025
-      - 8025:8025
-    networks:
-      - default
-
   # app:
   #   build:
   #     context: .
@@ -43,7 +34,6 @@ services:
   #     - CORS_ORIGIN=http://localhost:3000
   #   depends_on:
   #     - db
-  #     - mailhog
   #   networks:
   #     - default
   #   volumes:

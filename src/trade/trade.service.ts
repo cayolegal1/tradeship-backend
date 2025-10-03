@@ -5,7 +5,11 @@ import {
   ConflictException,
   ForbiddenException,
 } from '@nestjs/common';
+
+// services
 import { PrismaService } from '../common/prisma/prisma.service';
+
+// dtos
 import { CreateItemDto } from './dto/create-item.dto';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -20,6 +24,7 @@ import {
   PaginationDto,
   PaginatedResponseDto,
 } from '../common/dto/pagination.dto';
+import { GetItemsDto } from './dto/get-items.dto';
 
 @Injectable()
 export class TradeService {
@@ -95,9 +100,9 @@ export class TradeService {
   }
 
   async getItems(
-    paginationDto: PaginationDto,
+    itemsDto: GetItemsDto,
   ): Promise<PaginatedResponseDto<ItemResponseDto>> {
-    const { page, limit, skip } = paginationDto;
+    const { page, limit, skip } = itemsDto;
 
     const [items, total] = await Promise.all([
       this.prisma.item.findMany({

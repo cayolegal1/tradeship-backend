@@ -36,6 +36,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { SuccessResponseDto } from '../common/dto/response.dto';
+import { GetItemsDto } from './dto/get-items.dto';
 
 @ApiTags('Trading')
 @Controller('trade')
@@ -114,9 +115,9 @@ export class TradeController {
     description: 'Items per page',
   })
   async getItems(
-    @Query() paginationDto: PaginationDto,
+    @Query() itemsDto: GetItemsDto,
   ): Promise<PaginatedResponseDto<ItemResponseDto>> {
-    return this.tradeService.getItems(paginationDto);
+    return this.tradeService.getItems(itemsDto);
   }
 
   @Get('items/:id')

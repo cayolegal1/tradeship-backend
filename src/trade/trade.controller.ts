@@ -8,6 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
+  ParseIntPipe,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -129,7 +130,7 @@ export class TradeController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Item not found' })
-  async getItemById(@Param('id') itemId: string): Promise<ItemResponseDto> {
+  async getItemById(@Param('id', ParseIntPipe) itemId: number): Promise<ItemResponseDto> {
     return this.tradeService.getItemById(itemId);
   }
 
@@ -172,7 +173,7 @@ export class TradeController {
   @ApiResponse({ status: 404, description: 'Item not found' })
   async updateItem(
     @CurrentUser() user: any,
-    @Param('id') itemId: string,
+    @Param('id', ParseIntPipe) itemId: number,
     @Body() updateData: Partial<CreateItemDto>,
   ): Promise<ItemResponseDto> {
     return this.tradeService.updateItem(user.id, itemId, updateData);
@@ -189,7 +190,7 @@ export class TradeController {
   @ApiResponse({ status: 404, description: 'Item not found' })
   async deleteItem(
     @CurrentUser() user: any,
-    @Param('id') itemId: string,
+    @Param('id', ParseIntPipe) itemId: number,
   ): Promise<SuccessResponseDto> {
     const result = await this.tradeService.deleteItem(user.id, itemId);
     return new SuccessResponseDto(result.message);
@@ -250,7 +251,7 @@ export class TradeController {
   @ApiResponse({ status: 404, description: 'Trade not found' })
   async getTradeById(
     @CurrentUser() user: any,
-    @Param('id') tradeId: string,
+    @Param('id', ParseIntPipe) tradeId: number,
   ): Promise<TradeResponseDto> {
     return this.tradeService.getTradeById(tradeId, user.id);
   }
@@ -268,7 +269,7 @@ export class TradeController {
   @ApiResponse({ status: 404, description: 'Trade not found' })
   async acceptTrade(
     @CurrentUser() user: any,
-    @Param('id') tradeId: string,
+    @Param('id', ParseIntPipe) tradeId: number,
   ): Promise<SuccessResponseDto> {
     const result = await this.tradeService.acceptTrade(tradeId, user.id);
     return new SuccessResponseDto(result.message);
@@ -287,7 +288,7 @@ export class TradeController {
   @ApiResponse({ status: 404, description: 'Trade not found' })
   async completeTrade(
     @CurrentUser() user: any,
-    @Param('id') tradeId: string,
+    @Param('id', ParseIntPipe) tradeId: number,
   ): Promise<SuccessResponseDto> {
     const result = await this.tradeService.completeTrade(tradeId, user.id);
     return new SuccessResponseDto(result.message);
@@ -306,7 +307,7 @@ export class TradeController {
   @ApiResponse({ status: 404, description: 'Trade not found' })
   async cancelTrade(
     @CurrentUser() user: any,
-    @Param('id') tradeId: string,
+    @Param('id', ParseIntPipe) tradeId: number,
     @Body() body: { reason?: string },
   ): Promise<SuccessResponseDto> {
     const result = await this.tradeService.cancelTrade(
@@ -345,7 +346,7 @@ export class TradeController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Trade not found' })
   async getTradeReviews(
-    @Param('id') tradeId: string,
+    @Param('id', ParseIntPipe) tradeId: number,
   ): Promise<ReviewResponseDto[]> {
     return this.tradeService.getTradeReviews(tradeId);
   }
@@ -378,7 +379,7 @@ export class TradeController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Trade not found' })
   async getTradeRatings(
-    @Param('id') tradeId: string,
+    @Param('id', ParseIntPipe) tradeId: number,
   ): Promise<TradeRatingResponseDto[]> {
     return this.tradeService.getTradeRatings(tradeId);
   }

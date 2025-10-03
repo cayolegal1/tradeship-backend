@@ -4,6 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { MarkReadDto } from './dto/mark-read.dto';
 import {
@@ -32,19 +33,19 @@ export class NotificationService {
     createNotificationDto: CreateNotificationDto,
   ): Promise<NotificationResponseDto> {
     const notification = await this.prisma.notification.create({
-      data: {
+      data: ({
         ...createNotificationDto,
         expiresAt: createNotificationDto.expiresAt
           ? new Date(createNotificationDto.expiresAt)
           : null,
-      },
+      }) as Prisma.NotificationUncheckedCreateInput,
     });
 
     return this.convertNotificationToResponseDto(notification);
   }
 
   async getUserNotifications(
-    userId: string,
+    userId: number,
     paginationDto: PaginationDto,
   ): Promise<PaginatedResponseDto<NotificationResponseDto>> {
     const { page, limit, skip } = paginationDto;
@@ -77,7 +78,7 @@ export class NotificationService {
   }
 
   async getUnreadNotifications(
-    userId: string,
+    userId: number,
   ): Promise<NotificationResponseDto[]> {
     const notifications = await this.prisma.notification.findMany({
       where: {
@@ -93,7 +94,7 @@ export class NotificationService {
   }
 
   async markAsRead(
-    userId: string,
+    userId: number,
     markReadDto: MarkReadDto,
   ): Promise<{ message: string }> {
     const { isRead, notificationIds } = markReadDto;
@@ -129,7 +130,7 @@ export class NotificationService {
     };
   }
 
-  async markAllAsRead(userId: string): Promise<{ message: string }> {
+  async markAllAsRead(userId: number): Promise<{ message: string }> {
     await this.prisma.notification.updateMany({
       where: {
         recipientId: userId,
@@ -147,8 +148,8 @@ export class NotificationService {
   }
 
   async deleteNotification(
-    userId: string,
-    notificationId: string,
+    userId: number,
+    notificationId: number,
   ): Promise<{ message: string }> {
     const notification = await this.prisma.notification.findFirst({
       where: {
@@ -171,7 +172,7 @@ export class NotificationService {
   }
 
   async getNotificationStats(
-    userId: string,
+    userId: number,
   ): Promise<NotificationStatsResponseDto> {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -263,7 +264,7 @@ export class NotificationService {
     });
   }
 
-  async getUserNotificationSettings(userId: string): Promise<any[]> {
+  async getUserNotificationSettings(userId: number): Promise<any[]> {
     return this.prisma.notificationUserSettings.findMany({
       where: { userId },
       include: {
@@ -273,9 +274,9 @@ export class NotificationService {
   }
 
   async updateNotificationSettings(
-    userId: string,
+    userId: number,
     settings: Array<{
-      notificationTypeId: string;
+      notificationTypeId: number;
       emailEnabled: boolean;
       pushEnabled: boolean;
       inAppEnabled: boolean;
@@ -311,12 +312,12 @@ export class NotificationService {
   }
 
   async sendNotificationToUser(
-    recipientId: string,
+    recipientId: number,
     notificationTypeName: string,
     title: string,
     message: string,
     options?: {
-      senderId?: string;
+      senderId?: number;
       contentType?: string;
       objectId?: string;
       metadata?: Record<string, any>;
@@ -335,30 +336,30 @@ export class NotificationService {
 
     // Create notification
     const notification = await this.prisma.notification.create({
-      data: {
+      data: ({
         recipientId,
-        senderId: options?.senderId,
+        senderId: options?.senderId ?? null,
         notificationTypeId: notificationType.id,
         title,
         message,
         contentType: options?.contentType,
-        objectId: options?.objectId,
+        objectId: options?.objectId ?? null,
         metadata: options?.metadata || {},
         actionUrl: options?.actionUrl,
-        expiresAt: options?.expiresAt,
-      },
+        expiresAt: options?.expiresAt ?? null,
+      }) as Prisma.NotificationUncheckedCreateInput,
     });
 
     return this.convertNotificationToResponseDto(notification);
   }
 
   async sendBulkNotification(
-    recipientIds: string[],
+    recipientIds: number[],
     notificationTypeName: string,
     titleTemplate: string,
     messageTemplate: string,
     options?: {
-      senderId?: string;
+      senderId?: number;
       contentType?: string;
       objectId?: string;
       metadata?: Record<string, any>;
@@ -379,18 +380,18 @@ export class NotificationService {
     const notifications = await Promise.all(
       recipientIds.map((recipientId) =>
         this.prisma.notification.create({
-          data: {
+          data: ({
             recipientId,
-            senderId: options?.senderId,
+            senderId: options?.senderId ?? null,
             notificationTypeId: notificationType.id,
             title: titleTemplate,
             message: messageTemplate,
             contentType: options?.contentType,
-            objectId: options?.objectId,
+            objectId: options?.objectId ?? null,
             metadata: options?.metadata || {},
             actionUrl: options?.actionUrl,
-            expiresAt: options?.expiresAt,
-          },
+            expiresAt: options?.expiresAt ?? null,
+          }) as Prisma.NotificationUncheckedCreateInput,
         }),
       ),
     );

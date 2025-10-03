@@ -158,12 +158,12 @@ export class AuthService {
     };
   }
 
-  async getCurrentUser(userId: string): Promise<UserWithProfileResponseDto> {
+  async getCurrentUser(userId: number): Promise<UserWithProfileResponseDto> {
     return this.getUserWithProfile(userId);
   }
 
   async updateUser(
-    userId: string,
+    userId: number,
     updateUserDto: UpdateUserDto,
   ): Promise<UserWithProfileResponseDto> {
     const { email } = updateUserDto;
@@ -194,7 +194,7 @@ export class AuthService {
   }
 
   async updateProfile(
-    userId: string,
+    userId: number,
     updateProfileDto: UpdateProfileDto,
   ): Promise<UserProfileResponseDto> {
     const { interests, ...profileData } = updateProfileDto;
@@ -245,7 +245,7 @@ export class AuthService {
   }
 
   async changePassword(
-    userId: string,
+    userId: number,
     changePasswordDto: ChangePasswordDto,
   ): Promise<{ message: string }> {
     const { oldPassword, newPassword, newPasswordConfirm } = changePasswordDto;
@@ -282,7 +282,7 @@ export class AuthService {
     return { message: 'Password changed successfully' };
   }
 
-  async getUserProfile(userId: string): Promise<UserProfileResponseDto> {
+  async getUserProfile(userId: number): Promise<UserProfileResponseDto> {
     const profile = await this.prisma.userProfile.findUnique({
       where: { userId },
       include: {
@@ -297,7 +297,7 @@ export class AuthService {
     return this.convertProfileToResponseDto(profile);
   }
 
-  async getUserById(userId: string): Promise<UserWithProfileResponseDto> {
+  async getUserById(userId: number): Promise<UserWithProfileResponseDto> {
     return this.getUserWithProfile(userId);
   }
 
@@ -311,8 +311,8 @@ export class AuthService {
   }
 
   async addInterest(
-    userId: string,
-    interestId: string,
+    userId: number,
+    interestId: number,
   ): Promise<{ message: string; interests: string[] }> {
     // Get user profile
     const profile = await this.prisma.userProfile.findUnique({
@@ -356,8 +356,8 @@ export class AuthService {
   }
 
   async removeInterest(
-    userId: string,
-    interestId: string,
+    userId: number,
+    interestId: number,
   ): Promise<{ message: string; interests: string[] }> {
     // Get user profile
     const profile = await this.prisma.userProfile.findUnique({
@@ -401,8 +401,8 @@ export class AuthService {
   }
 
   async bulkUpdateInterests(
-    userId: string,
-    interestIds: string[],
+    userId: number,
+    interestIds: number[],
   ): Promise<{ message: string; interests: string[] }> {
     // Get user profile
     const profile = await this.prisma.userProfile.findUnique({
@@ -472,7 +472,7 @@ export class AuthService {
   }
 
   private async getUserWithProfile(
-    userId: string,
+    userId: number,
   ): Promise<UserWithProfileResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

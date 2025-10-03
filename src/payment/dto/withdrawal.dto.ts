@@ -1,32 +1,34 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDecimal, IsUUID, IsOptional, Min, Max } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Type } from 'class-transformer';
+import { IsNumber, IsInt, IsOptional, IsString, Min, Max } from 'class-validator';
 
 export class WithdrawalRequestDto {
   @ApiProperty({
     description: 'Amount to withdraw',
     example: 50.0,
     minimum: 1.0,
-    maximum: 10000.0,
+    maximum: 5000.0,
   })
-  @Transform(({ value }) => parseFloat(value))
-  @IsDecimal({ decimal_digits: '0,2' })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
   @Min(1.0)
-  @Max(10000.0)
+  @Max(5000.0)
   amount: number;
 
   @ApiPropertyOptional({
-    description: 'Bank account ID for withdrawal',
-    example: 'uuid',
+    description: 'Bank account ID',
+    example: 1,
   })
+  @Type(() => Number)
   @IsOptional()
-  @IsUUID()
-  bankAccountId?: string;
+  @IsInt()
+  bankAccountId?: number;
 
   @ApiPropertyOptional({
     description: 'Description for the withdrawal',
-    example: 'Withdrawal to bank account',
+    example: 'Transfer to bank',
   })
   @IsOptional()
+  @IsString()
   description?: string;
 }

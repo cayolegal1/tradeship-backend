@@ -4,19 +4,19 @@ import { Expose, Type } from 'class-transformer';
 export class NotificationResponseDto {
   @ApiProperty()
   @Expose()
-  id: string;
+  id: number;
 
   @ApiProperty()
   @Expose()
-  recipientId: string;
+  recipientId: number;
 
   @ApiPropertyOptional()
   @Expose()
-  senderId?: string;
+  senderId?: number;
 
   @ApiProperty()
   @Expose()
-  notificationTypeId: string;
+  notificationTypeId: number;
 
   @ApiProperty()
   @Expose()
@@ -110,7 +110,7 @@ export class NotificationResponseDto {
 export class NotificationTypeResponseDto {
   @ApiProperty()
   @Expose()
-  id: string;
+  id: number;
 
   @ApiProperty()
   @Expose()

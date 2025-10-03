@@ -1,6 +1,6 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+﻿import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, JwtFromRequestFunction, Strategy } from 'passport-jwt';
+import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { IJwtPayload } from '../../common/interfaces/user.interface';
@@ -21,16 +21,26 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: IJwtPayload) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: payload.sub },
-      include: {
-        profile: {
-          include: {
-            interests: true,
+    if (!payload?.sub) {
+      throw new UnauthorizedException('Invalid authentication token');
+    }
+
+    let user;
+
+    try {
+      user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+        include: {
+          profile: {
+            include: {
+              interests: true,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (error) {
+      throw new UnauthorizedException('Invalid authentication token');
+    }
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException('User not found or inactive');

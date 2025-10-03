@@ -1,15 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
-  IsDecimal,
+  IsNumber,
   IsOptional,
   IsArray,
-  IsUUID,
+  IsInt,
   MinLength,
   MaxLength,
   Min,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class CreateItemDto {
   @ApiProperty({
@@ -35,18 +35,19 @@ export class CreateItemDto {
     minimum: 0.01,
   })
   @Transform(({ value }) => parseFloat(value))
-  @IsDecimal({ decimal_digits: '0,2' })
+  @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0.01)
   estimatedValue: number;
 
   @ApiPropertyOptional({
     description: 'List of interest IDs',
-    example: ['uuid1', 'uuid2'],
+    example: [1, 2],
   })
   @IsOptional()
   @IsArray()
-  @IsUUID('4', { each: true })
-  interests?: string[];
+  @Type(() => Number)
+  @IsInt({ each: true })
+  interests?: number[];
 
   @ApiPropertyOptional({
     description: 'Trade preferences',
@@ -64,7 +65,7 @@ export class CreateItemDto {
   })
   @IsOptional()
   @Transform(({ value }) => parseFloat(value))
-  @IsDecimal({ decimal_digits: '0,2' })
+  @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0.01)
   minimumTradeValue?: number;
 

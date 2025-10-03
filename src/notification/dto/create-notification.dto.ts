@@ -2,34 +2,38 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsOptional,
-  IsUUID,
+  IsInt,
   IsObject,
   IsUrl,
   IsDateString,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateNotificationDto {
   @ApiProperty({
     description: 'Recipient user ID',
-    example: 'uuid',
+    example: 1,
   })
-  @IsUUID()
-  recipientId: string;
+  @Type(() => Number)
+  @IsInt()
+  recipientId: number;
 
   @ApiPropertyOptional({
     description: 'Sender user ID',
-    example: 'uuid',
+    example: 2,
   })
   @IsOptional()
-  @IsUUID()
-  senderId?: string;
+  @Type(() => Number)
+  @IsInt()
+  senderId?: number;
 
   @ApiProperty({
     description: 'Notification type ID',
-    example: 'uuid',
+    example: 5,
   })
-  @IsUUID()
-  notificationTypeId: string;
+  @Type(() => Number)
+  @IsInt()
+  notificationTypeId: number;
 
   @ApiProperty({
     description: 'Notification title',
@@ -55,15 +59,16 @@ export class CreateNotificationDto {
 
   @ApiPropertyOptional({
     description: 'ID of related object',
-    example: 'uuid',
+    example: '10',
   })
   @IsOptional()
+  @Type(() => String)
   @IsString()
   objectId?: string;
 
   @ApiPropertyOptional({
     description: 'Additional metadata',
-    example: { tradeId: 'uuid', itemName: 'iPhone 13' },
+    example: { tradeId: 10, itemName: 'iPhone 13' },
   })
   @IsOptional()
   @IsObject()
@@ -71,7 +76,7 @@ export class CreateNotificationDto {
 
   @ApiPropertyOptional({
     description: 'Action URL',
-    example: 'https://app.tradeship.com/trades/uuid',
+    example: 'https://app.tradeship.com/trades/10',
   })
   @IsOptional()
   @IsUrl()

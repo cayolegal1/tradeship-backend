@@ -5,10 +5,13 @@ import {
   Put,
   Patch,
   Body,
+  Param,
   UseGuards,
   HttpCode,
   HttpStatus,
   Res,
+  ParseIntPipe,
+  ParseArrayPipe,
 } from '@nestjs/common';
 
 import {
@@ -211,10 +214,9 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'User not found' })
   async getUserProfile(
-    @CurrentUser() user: any,
-    @Body() body: { userId: string },
+    @Param('userId', ParseIntPipe) userId: number,
   ): Promise<UserWithProfileResponseDto> {
-    return this.authService.getUserById(body.userId);
+    return this.authService.getUserById(userId);
   }
 
   @Get('interests')
@@ -235,13 +237,13 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiBody({
-    schema: { type: 'object', properties: { interestId: { type: 'string' } } },
+    schema: { type: 'object', properties: { interestId: { type: 'number' } } },
   })
   async addInterest(
     @CurrentUser() user: any,
-    @Body() body: { interestId: string },
+    @Body('interestId', ParseIntPipe) interestId: number,
   ): Promise<{ message: string; interests: string[] }> {
-    return this.authService.addInterest(user.id, body.interestId);
+    return this.authService.addInterest(user.id, interestId);
   }
 
   @Post('interests/remove')
@@ -252,13 +254,13 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiBody({
-    schema: { type: 'object', properties: { interestId: { type: 'string' } } },
+    schema: { type: 'object', properties: { interestId: { type: 'number' } } },
   })
   async removeInterest(
     @CurrentUser() user: any,
-    @Body() body: { interestId: string },
+    @Body('interestId', ParseIntPipe) interestId: number,
   ): Promise<{ message: string; interests: string[] }> {
-    return this.authService.removeInterest(user.id, body.interestId);
+    return this.authService.removeInterest(user.id, interestId);
   }
 
   @Put('interests/bulk-update')
@@ -271,14 +273,14 @@ export class AuthController {
   @ApiBody({
     schema: {
       type: 'object',
-      properties: { interestIds: { type: 'array', items: { type: 'string' } } },
+      properties: { interestIds: { type: 'array', items: { type: 'number' } } },
     },
   })
   async bulkUpdateInterests(
     @CurrentUser() user: any,
-    @Body() body: { interestIds: string[] },
+    @Body('interestIds', new ParseArrayPipe({ items: Number, optional: false })) interestIds: number[],
   ): Promise<{ message: string; interests: string[] }> {
-    return this.authService.bulkUpdateInterests(user.id, body.interestIds);
+    return this.authService.bulkUpdateInterests(user.id, interestIds);
   }
 
   @Get('health')

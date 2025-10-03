@@ -1,11 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsString,
   IsOptional,
   IsBoolean,
   IsDateString,
   IsArray,
-  IsUUID,
+  IsInt,
   MaxLength,
 } from 'class-validator';
 
@@ -98,10 +99,11 @@ export class UpdateProfileDto {
 
   @ApiPropertyOptional({
     description: 'List of interest IDs',
-    example: ['uuid1', 'uuid2'],
+    example: [1, 2],
   })
   @IsOptional()
   @IsArray()
-  @IsUUID('4', { each: true })
-  interests?: string[];
+  @Type(() => Number)
+  @IsInt({ each: true })
+  interests?: number[];
 }

@@ -1,78 +1,74 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsUUID,
-  IsInt,
-  IsString,
-  IsBoolean,
-  IsOptional,
-  Min,
-  Max,
-  MinLength,
-} from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsInt, IsOptional, IsBoolean, Max, Min, MaxLength } from 'class-validator';
 
 export class CreateTradeRatingDto {
   @ApiProperty({
-    description: 'Trade ID being rated',
-    example: 'uuid',
+    description: 'Trade ID',
+    example: 1,
   })
-  @IsUUID()
-  tradeId: string;
+  @Type(() => Number)
+  @IsInt()
+  tradeId: number;
 
   @ApiProperty({
-    description: 'Communication rating (1-5)',
+    description: 'Communication rating',
     example: 5,
     minimum: 1,
     maximum: 5,
   })
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(5)
   communicationRating: number;
 
   @ApiProperty({
-    description: 'Item condition rating (1-5)',
+    description: 'Item condition rating',
     example: 4,
     minimum: 1,
     maximum: 5,
   })
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(5)
   itemConditionRating: number;
 
   @ApiProperty({
-    description: 'Shipping rating (1-5)',
+    description: 'Shipping rating',
     example: 5,
     minimum: 1,
     maximum: 5,
   })
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(5)
   shippingRating: number;
 
   @ApiProperty({
-    description: 'Overall rating (1-5)',
+    description: 'Overall rating',
     example: 5,
     minimum: 1,
     maximum: 5,
   })
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(5)
   overallRating: number;
 
-  @ApiPropertyOptional({
-    description: 'Additional feedback',
-    example: 'Excellent communication and fast shipping',
+  @ApiProperty({
+    description: 'Feedback comments',
+    example: 'Would happily trade again!',
   })
   @IsOptional()
-  @IsString()
-  @MinLength(10)
+  @MaxLength(500)
   feedback?: string;
 
   @ApiProperty({
-    description: 'Would trade with this person again',
+    description: 'Would trade again',
     example: true,
   })
   @IsBoolean()

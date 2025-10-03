@@ -4,7 +4,7 @@ import { Exclude, Expose, Type } from 'class-transformer';
 export class UserResponseDto {
   @ApiProperty()
   @Expose()
-  id: string;
+  id: number;
 
   @ApiProperty()
   @Expose()
@@ -74,11 +74,11 @@ export class UserResponseDto {
 export class UserProfileResponseDto {
   @ApiProperty()
   @Expose()
-  id: string;
+  id: number;
 
   @ApiProperty()
   @Expose()
-  userId: string;
+  userId: number;
 
   @ApiPropertyOptional()
   @Expose()

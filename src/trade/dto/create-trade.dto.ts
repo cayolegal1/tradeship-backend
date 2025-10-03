@@ -1,36 +1,39 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsUUID,
-  IsDecimal,
+  IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   IsDateString,
   Min,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class CreateTradeDto {
   @ApiProperty({
     description: 'User ID of the trader receiving the offer',
-    example: 'uuid',
+    example: 2,
   })
-  @IsUUID()
-  traderReceivingId: string;
+  @Type(() => Number)
+  @IsInt()
+  traderReceivingId: number;
 
   @ApiProperty({
     description: 'Item ID being offered',
-    example: 'uuid',
+    example: 10,
   })
-  @IsUUID()
-  itemOfferedId: string;
+  @Type(() => Number)
+  @IsInt()
+  itemOfferedId: number;
 
   @ApiPropertyOptional({
     description: 'Item ID being requested (optional for cash trades)',
-    example: 'uuid',
+    example: 15,
   })
   @IsOptional()
-  @IsUUID()
-  itemRequestedId?: string;
+  @Type(() => Number)
+  @IsInt()
+  itemRequestedId?: number;
 
   @ApiPropertyOptional({
     description: 'Additional cash amount in trade',
@@ -39,7 +42,7 @@ export class CreateTradeDto {
   })
   @IsOptional()
   @Transform(({ value }) => parseFloat(value))
-  @IsDecimal({ decimal_digits: '0,2' })
+  @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   cashAmount?: number;
 

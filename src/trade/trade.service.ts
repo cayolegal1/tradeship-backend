@@ -75,7 +75,7 @@ export class TradeService {
 
   // Item Management
   async createItem(
-    userId: string,
+    userId: number,
     createItemDto: CreateItemDto,
   ): Promise<ItemResponseDto> {
     const { interests, ...itemData } = createItemDto;
@@ -140,7 +140,7 @@ export class TradeService {
     return new PaginatedResponseDto(itemDtos, meta);
   }
 
-  async getItemById(itemId: string): Promise<ItemResponseDto> {
+  async getItemById(itemId: number): Promise<ItemResponseDto> {
     const item = await this.prisma.item.findUnique({
       where: { id: itemId },
       include: {
@@ -164,7 +164,7 @@ export class TradeService {
   }
 
   async getUserItems(
-    userId: string,
+    userId: number,
     paginationDto: PaginationDto,
   ): Promise<PaginatedResponseDto<ItemResponseDto>> {
     const { page, limit, skip } = paginationDto;
@@ -201,8 +201,8 @@ export class TradeService {
   }
 
   async updateItem(
-    userId: string,
-    itemId: string,
+    userId: number,
+    itemId: number,
     updateData: Partial<CreateItemDto>,
   ): Promise<ItemResponseDto> {
     const item = await this.prisma.item.findFirst({
@@ -237,8 +237,8 @@ export class TradeService {
   }
 
   async deleteItem(
-    userId: string,
-    itemId: string,
+    userId: number,
+    itemId: number,
   ): Promise<{ message: string }> {
     const item = await this.prisma.item.findFirst({
       where: { id: itemId, ownerId: userId },
@@ -258,7 +258,7 @@ export class TradeService {
 
   // Trade Management
   async createTrade(
-    userId: string,
+    userId: number,
     createTradeDto: CreateTradeDto,
   ): Promise<TradeResponseDto> {
     const {
@@ -335,7 +335,7 @@ export class TradeService {
   }
 
   async getTrades(
-    userId: string,
+    userId: number,
     paginationDto: PaginationDto,
   ): Promise<PaginatedResponseDto<TradeResponseDto>> {
     const { page, limit, skip } = paginationDto;
@@ -378,8 +378,8 @@ export class TradeService {
   }
 
   async getTradeById(
-    tradeId: string,
-    userId: string,
+    tradeId: number,
+    userId: number,
   ): Promise<TradeResponseDto> {
     const trade = await this.prisma.trade.findFirst({
       where: {
@@ -404,8 +404,8 @@ export class TradeService {
   }
 
   async acceptTrade(
-    tradeId: string,
-    userId: string,
+    tradeId: number,
+    userId: number,
   ): Promise<{ message: string }> {
     const trade = await this.prisma.trade.findFirst({
       where: {
@@ -433,8 +433,8 @@ export class TradeService {
   }
 
   async completeTrade(
-    tradeId: string,
-    userId: string,
+    tradeId: number,
+    userId: number,
   ): Promise<{ message: string }> {
     const trade = await this.prisma.trade.findFirst({
       where: {
@@ -496,8 +496,8 @@ export class TradeService {
   }
 
   async cancelTrade(
-    tradeId: string,
-    userId: string,
+    tradeId: number,
+    userId: number,
     reason?: string,
   ): Promise<{ message: string }> {
     const trade = await this.prisma.trade.findFirst({
@@ -532,7 +532,7 @@ export class TradeService {
 
   // Review Management
   async createReview(
-    userId: string,
+    userId: number,
     createReviewDto: CreateReviewDto,
   ): Promise<ReviewResponseDto> {
     const { tradeId, rating, description, wouldTradeAgain } = createReviewDto;
@@ -589,7 +589,7 @@ export class TradeService {
     return new ReviewResponseDto(review);
   }
 
-  async getTradeReviews(tradeId: string): Promise<ReviewResponseDto[]> {
+  async getTradeReviews(tradeId: number): Promise<ReviewResponseDto[]> {
     const reviews = await this.prisma.review.findMany({
       where: { tradeId },
       include: {
@@ -604,7 +604,7 @@ export class TradeService {
 
   // Rating Management
   async createTradeRating(
-    userId: string,
+    userId: number,
     createRatingDto: CreateTradeRatingDto,
   ): Promise<TradeRatingResponseDto> {
     const {
@@ -675,7 +675,7 @@ export class TradeService {
     return new TradeRatingResponseDto(rating);
   }
 
-  async getTradeRatings(tradeId: string): Promise<TradeRatingResponseDto[]> {
+  async getTradeRatings(tradeId: number): Promise<TradeRatingResponseDto[]> {
     const ratings = await this.prisma.tradeRating.findMany({
       where: { tradeId },
       include: {
@@ -688,7 +688,7 @@ export class TradeService {
     return ratings.map((rating) => new TradeRatingResponseDto(rating));
   }
 
-  private async updateTraderRating(traderId: string): Promise<void> {
+  private async updateTraderRating(traderId: number): Promise<void> {
     const ratings = await this.prisma.tradeRating.findMany({
       where: { ratedTraderId: traderId },
     });
@@ -709,7 +709,7 @@ export class TradeService {
     }
   }
 
-  private async calculateTraderTier(traderId: string): Promise<void> {
+  private async calculateTraderTier(traderId: number): Promise<void> {
     const profile = await this.prisma.userProfile.findUnique({
       where: { userId: traderId },
     });

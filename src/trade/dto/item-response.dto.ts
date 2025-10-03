@@ -4,7 +4,7 @@ import { Expose, Type } from 'class-transformer';
 export class InterestResponseDto {
   @ApiProperty()
   @Expose()
-  id: string;
+  id: number;
 
   @ApiProperty()
   @Expose()
@@ -38,7 +38,7 @@ export class InterestResponseDto {
 export class ItemImageResponseDto {
   @ApiProperty()
   @Expose()
-  id: string;
+  id: number;
 
   @ApiProperty()
   @Expose()
@@ -68,7 +68,7 @@ export class ItemImageResponseDto {
 export class ItemFileResponseDto {
   @ApiProperty()
   @Expose()
-  id: string;
+  id: number;
 
   @ApiProperty()
   @Expose()
@@ -145,7 +145,7 @@ export class ItemFileResponseDto {
 export class ShippingDetailsResponseDto {
   @ApiProperty()
   @Expose()
-  id: string;
+  id: number;
 
   @ApiProperty()
   @Expose()
@@ -200,7 +200,7 @@ export class ShippingDetailsResponseDto {
 export class ItemResponseDto {
   @ApiProperty()
   @Expose()
-  id: string;
+  id: number;
 
   @ApiProperty()
   @Expose()
@@ -216,7 +216,7 @@ export class ItemResponseDto {
 
   @ApiProperty()
   @Expose()
-  ownerId: string;
+  ownerId: number;
 
   @ApiProperty()
   @Expose()

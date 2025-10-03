@@ -15,7 +15,7 @@ datasource db {
 
 // User and Authentication Models
 model User {
-  id               String    @id @default(uuid())
+  id               Int    @id @default(autoincrement())
   email            String    @unique
   username         String    @unique
   firstName        String
@@ -64,8 +64,8 @@ model User {
 }
 
 model UserProfile {
-  id                 String     @id @default(uuid())
-  userId             String     @unique
+  id                 Int     @id @default(autoincrement())
+  userId             Int     @unique
   phoneNumber        String?
   dateOfBirth        DateTime?
   bio                String?
@@ -104,7 +104,7 @@ enum TraderTier {
 
 // Interest/Tag Model
 model Interest {
-  id          String   @id @default(uuid())
+  id          Int   @id @default(autoincrement())
   name        String   @unique
   description String?
   color       String   @default("#007bff")
@@ -123,7 +123,7 @@ model Interest {
 
 // Notification System Models
 model NotificationType {
-  id                  String               @id @default(uuid())
+  id                  Int               @id @default(autoincrement())
   name                String               @unique
   displayName         String
   description         String?
@@ -156,9 +156,9 @@ enum NotificationPriority {
 }
 
 model NotificationUserSettings {
-  id                 String   @id @default(uuid())
-  userId             String
-  notificationTypeId String
+  id                 Int   @id @default(autoincrement())
+  userId             Int
+  notificationTypeId Int
   emailEnabled       Boolean  @default(true)
   pushEnabled        Boolean  @default(true)
   inAppEnabled       Boolean  @default(true)
@@ -176,10 +176,10 @@ model NotificationUserSettings {
 }
 
 model Notification {
-  id                 String    @id @default(uuid())
-  recipientId        String
-  senderId           String?
-  notificationTypeId String
+  id                 Int    @id @default(autoincrement())
+  recipientId        Int
+  senderId           Int?
+  notificationTypeId Int
   title              String
   message            String
   contentType        String?
@@ -212,9 +212,9 @@ model Notification {
 }
 
 model NotificationBatch {
-  id                 String      @id @default(uuid())
+  id                 Int      @id @default(autoincrement())
   name               String
-  notificationTypeId String
+  notificationTypeId Int
   status             BatchStatus @default(PENDING)
   titleTemplate      String
   messageTemplate    String
@@ -245,10 +245,10 @@ enum BatchStatus {
 }
 
 model NotificationBatchRecipient {
-  id             String          @id @default(uuid())
-  batchId        String
-  recipientId    String
-  notificationId String?
+  id             Int          @id @default(autoincrement())
+  batchId        Int
+  recipientId    Int
+  notificationId Int?
   status         RecipientStatus @default(PENDING)
   errorMessage   String?
   sentAt         DateTime?
@@ -274,11 +274,11 @@ enum RecipientStatus {
 
 // Chat System Models
 model Conversation {
-  id                   String           @id @default(uuid())
+  id                   Int           @id @default(autoincrement())
   conversationType     ConversationType @default(DIRECT)
   title                String?
   description          String?
-  createdById          String
+  createdById          Int
   contentType          String?
   objectId             String?
   isActive             Boolean          @default(true)
@@ -310,13 +310,13 @@ enum ConversationType {
 }
 
 model ChatParticipant {
-  id             String          @id @default(uuid())
-  conversationId String
-  userId         String
+  id             Int          @id @default(autoincrement())
+  conversationId Int
+  userId         Int
   role           ParticipantRole @default(MEMBER)
   isActive       Boolean         @default(true)
   isMuted        Boolean         @default(false)
-  addedById      String?
+  addedById      Int?
   joinedAt       DateTime        @default(now())
   leftAt         DateTime?
   lastReadAt     DateTime?
@@ -340,16 +340,16 @@ enum ParticipantRole {
 }
 
 model ChatMessage {
-  id             String      @id @default(uuid())
-  conversationId String
-  senderId       String
+  id             Int      @id @default(autoincrement())
+  conversationId Int
+  senderId       Int
   messageType    MessageType @default(TEXT)
   content        String
   file           String?
   fileName       String?
   fileSize       Int?
   mimeType       String?
-  replyToId      String?
+  replyToId      Int?
   isEdited       Boolean     @default(false)
   isDeleted      Boolean     @default(false)
   deliveredAt    DateTime?
@@ -383,8 +383,8 @@ enum MessageType {
 
 // Payment System Models
 model UserWallet {
-  id                     String   @id @default(uuid())
-  userId                 String   @unique
+  id                     Int   @id @default(autoincrement())
+  userId                 Int   @unique
   stripeCustomerId       String?
   availableBalance       Decimal  @default(0.00) @db.Decimal(10, 2)
   escrowBalance          Decimal  @default(0.00) @db.Decimal(10, 2)
@@ -407,8 +407,8 @@ model UserWallet {
 }
 
 model PaymentMethod {
-  id                    String      @id @default(uuid())
-  userId                String
+  id                    Int      @id @default(autoincrement())
+  userId                Int
   stripePaymentMethodId String
   paymentType           PaymentType
   lastFour              String?
@@ -435,8 +435,8 @@ enum PaymentType {
 }
 
 model BankAccount {
-  id                    String   @id @default(uuid())
-  userId                String
+  id                    Int   @id @default(autoincrement())
+  userId                Int
   stripeBankAccountId   String
   bankName              String
   accountHolderName     String
@@ -458,16 +458,16 @@ model BankAccount {
 }
 
 model WalletTransaction {
-  id                    String            @id @default(uuid())
-  walletId              String
+  id                    Int            @id @default(autoincrement())
+  walletId              Int
   transactionType       TransactionType
   amount                Decimal           @db.Decimal(10, 2)
   status                TransactionStatus @default(PENDING)
   description           String?
   stripePaymentIntentId String?
   stripeChargeId        String?
-  paymentMethodId       String?
-  tradeId               String?
+  paymentMethodId       Int?
+  tradeId               Int?
   platformFee           Decimal           @default(0.00) @db.Decimal(8, 2)
   stripeFee             Decimal           @default(0.00) @db.Decimal(8, 2)
   balanceBefore         Decimal?          @db.Decimal(10, 2)
@@ -511,11 +511,11 @@ enum TransactionStatus {
 
 // Trade System Models
 model Item {
-  id                  String   @id @default(uuid())
+  id                  Int   @id @default(autoincrement())
   title               String
   description         String
   estimatedValue      Decimal  @db.Decimal(10, 2)
-  ownerId             String
+  ownerId             Int
   isAvailableForTrade Boolean  @default(true)
   tradePreferences    String?
   minimumTradeValue   Decimal? @db.Decimal(10, 2)
@@ -540,8 +540,8 @@ model Item {
 }
 
 model ItemImage {
-  id        String   @id @default(uuid())
-  itemId    String
+  id        Int   @id @default(autoincrement())
+  itemId    Int
   image     String
   name      String
   isPrimary Boolean  @default(false)
@@ -557,8 +557,8 @@ model ItemImage {
 }
 
 model ItemFile {
-  id          String   @id @default(uuid())
-  itemId      String
+  id          Int   @id @default(autoincrement())
+  itemId      Int
   file        String
   name        String
   fileType    FileType @default(OTHER)
@@ -591,8 +591,8 @@ enum FileType {
 }
 
 model ShippingDetails {
-  id             String   @id @default(uuid())
-  itemId         String   @unique
+  id             Int   @id @default(autoincrement())
+  itemId         Int   @unique
   shippingWeight Decimal  @db.Decimal(8, 2)
   length         Decimal  @db.Decimal(6, 2)
   width          Decimal  @db.Decimal(6, 2)
@@ -608,8 +608,8 @@ model ShippingDetails {
 }
 
 model ShippingAddress {
-  id           String   @id @default(uuid())
-  userId       String
+  id           Int   @id @default(autoincrement())
+  userId       Int
   addressLine1 String
   addressLine2 String?
   city         String
@@ -629,8 +629,8 @@ model ShippingAddress {
 }
 
 model ShippingPreferences {
-  id               String   @id @default(uuid())
-  userId           String   @unique
+  id               Int   @id @default(autoincrement())
+  userId           Int   @unique
   preferredCarrier Carrier  @default(USPS)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -651,8 +651,8 @@ enum Carrier {
 }
 
 model PaymentShippingSetup {
-  id             String         @id @default(uuid())
-  userId         String         @unique
+  id             Int         @id @default(autoincrement())
+  userId         Int         @unique
   shippingMethod ShippingMethod @default(STANDARD)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
@@ -672,8 +672,8 @@ enum ShippingMethod {
 }
 
 model TermsAgreement {
-  id                     String   @id @default(uuid())
-  userId                 String
+  id                     Int   @id @default(autoincrement())
+  userId                 Int
   itemDetailsAccurate    Boolean  @default(false)
   agreesToTerms          Boolean  @default(false)
   agreesToEscrow         Boolean  @default(false)
@@ -693,11 +693,11 @@ model TermsAgreement {
 }
 
 model Trade {
-  id                  String      @id @default(uuid())
-  traderOfferingId    String
-  traderReceivingId   String
-  itemOfferedId       String
-  itemRequestedId     String?
+  id                  Int      @id @default(autoincrement())
+  traderOfferingId    Int
+  traderReceivingId   Int
+  itemOfferedId       Int
+  itemRequestedId     Int?
   cashAmount          Decimal?    @db.Decimal(10, 2)
   status              TradeStatus @default(PENDING)
   notes               String?
@@ -734,10 +734,10 @@ enum TradeStatus {
 }
 
 model Review {
-  id               String   @id @default(uuid())
-  tradeId          String
-  reviewerId       String
-  reviewedTraderId String
+  id               Int   @id @default(autoincrement())
+  tradeId          Int
+  reviewerId       Int
+  reviewedTraderId Int
   rating           Int
   description      String
   wouldTradeAgain  Boolean  @default(true)
@@ -759,10 +759,10 @@ model Review {
 }
 
 model TradeRating {
-  id                  String   @id @default(uuid())
-  tradeId             String
-  raterId             String
-  ratedTraderId       String
+  id                  Int   @id @default(autoincrement())
+  tradeId             Int
+  raterId             Int
+  ratedTraderId       Int
   communicationRating Int
   itemConditionRating Int
   shippingRating      Int

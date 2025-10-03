@@ -10,6 +10,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ParseIntPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -145,7 +146,7 @@ export class NotificationController {
   @ApiResponse({ status: 404, description: 'Notification not found' })
   async deleteNotification(
     @CurrentUser() user: any,
-    @Param('id') notificationId: string,
+    @Param('id', ParseIntPipe) notificationId: number,
   ): Promise<SuccessResponseDto> {
     const result = await this.notificationService.deleteNotification(
       user.id,
@@ -197,15 +198,19 @@ export class NotificationController {
     @CurrentUser() user: any,
     @Body()
     settings: Array<{
-      notificationTypeId: string;
+      notificationTypeId: number;
       emailEnabled: boolean;
       pushEnabled: boolean;
       inAppEnabled: boolean;
     }>,
   ): Promise<SuccessResponseDto> {
+    const normalizedSettings = settings.map((setting) => ({
+      ...setting,
+      notificationTypeId: Number(setting.notificationTypeId),
+    }));
     const result = await this.notificationService.updateNotificationSettings(
       user.id,
-      settings,
+      normalizedSettings,
     );
     return new SuccessResponseDto(result.message);
   }
@@ -224,14 +229,14 @@ export class NotificationController {
     @CurrentUser() user: any,
     @Body()
     body: {
-      recipientId: string;
+      recipientId: number;
       notificationTypeName: string;
       title: string;
       message: string;
       options?: {
-        senderId?: string;
+        senderId?: number;
         contentType?: string;
-        objectId?: string;
+        objectId?: number;
         metadata?: Record<string, any>;
         actionUrl?: string;
         expiresAt?: string;
@@ -239,16 +244,23 @@ export class NotificationController {
     },
   ): Promise<NotificationResponseDto> {
     const { recipientId, notificationTypeName, title, message, options } = body;
+    const normalizedOptions = options
+      ? {
+          ...options,
+          senderId:
+            options.senderId !== undefined ? Number(options.senderId) : undefined,
+          objectId:
+            options.objectId !== undefined ? String(options.objectId) : undefined,
+          expiresAt: options.expiresAt ? new Date(options.expiresAt) : undefined,
+        }
+      : undefined;
 
     return this.notificationService.sendNotificationToUser(
-      recipientId,
+      Number(recipientId),
       notificationTypeName,
       title,
       message,
-      {
-        ...options,
-        expiresAt: options?.expiresAt ? new Date(options.expiresAt) : undefined,
-      },
+      normalizedOptions,
     );
   }
 
@@ -265,14 +277,14 @@ export class NotificationController {
     @CurrentUser() user: any,
     @Body()
     body: {
-      recipientIds: string[];
+      recipientIds: number[];
       notificationTypeName: string;
       titleTemplate: string;
       messageTemplate: string;
       options?: {
-        senderId?: string;
+        senderId?: number;
         contentType?: string;
-        objectId?: string;
+        objectId?: number;
         metadata?: Record<string, any>;
         actionUrl?: string;
         expiresAt?: string;
@@ -287,15 +299,23 @@ export class NotificationController {
       options,
     } = body;
 
+    const normalizedOptions = options
+      ? {
+          ...options,
+          senderId:
+            options.senderId !== undefined ? Number(options.senderId) : undefined,
+          objectId:
+            options.objectId !== undefined ? String(options.objectId) : undefined,
+          expiresAt: options.expiresAt ? new Date(options.expiresAt) : undefined,
+        }
+      : undefined;
+
     const result = await this.notificationService.sendBulkNotification(
-      recipientIds,
+      recipientIds.map((id) => Number(id)),
       notificationTypeName,
       titleTemplate,
       messageTemplate,
-      {
-        ...options,
-        expiresAt: options?.expiresAt ? new Date(options.expiresAt) : undefined,
-      },
+      normalizedOptions,
     );
 
     return new SuccessResponseDto(result.message);

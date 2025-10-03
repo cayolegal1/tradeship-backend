@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDecimal, IsUUID, IsOptional, Min, Max } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Type } from 'class-transformer';
+import { IsNumber, IsInt, IsOptional, IsString, Min, Max } from 'class-validator';
 
 export class EscrowOperationDto {
   @ApiProperty({
@@ -9,23 +9,25 @@ export class EscrowOperationDto {
     minimum: 0.01,
     maximum: 10000.0,
   })
-  @Transform(({ value }) => parseFloat(value))
-  @IsDecimal({ decimal_digits: '0,2' })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0.01)
   @Max(10000.0)
   amount: number;
 
   @ApiProperty({
     description: 'Trade ID associated with escrow',
-    example: 'uuid',
+    example: 1,
   })
-  @IsUUID()
-  tradeId: string;
+  @Type(() => Number)
+  @IsInt()
+  tradeId: number;
 
   @ApiPropertyOptional({
     description: 'Description for the escrow operation',
     example: 'Escrow for trade #123',
   })
   @IsOptional()
+  @IsString()
   description?: string;
 }

@@ -1,5 +1,5 @@
 export interface IUser {
-  id: string;
+  id: number;
   email: string;
   username: string;
   firstName: string;
@@ -16,8 +16,8 @@ export interface IUser {
 }
 
 export interface IUserProfile {
-  id: string;
-  userId: string;
+  id: number;
+  userId: number;
   phoneNumber?: string;
   dateOfBirth?: Date;
   bio?: string;
@@ -43,7 +43,7 @@ export interface IUserWithProfile extends IUser {
 }
 
 export interface IJwtPayload {
-  sub: string;
+  sub: number;
   email: string;
   username: string;
   iat?: number;

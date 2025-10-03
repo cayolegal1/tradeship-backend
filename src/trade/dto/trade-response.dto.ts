@@ -4,23 +4,23 @@ import { Expose, Type } from 'class-transformer';
 export class TradeResponseDto {
   @ApiProperty()
   @Expose()
-  id: string;
+  id: number;
 
   @ApiProperty()
   @Expose()
-  traderOfferingId: string;
+  traderOfferingId: number;
 
   @ApiProperty()
   @Expose()
-  traderReceivingId: string;
+  traderReceivingId: number;
 
   @ApiProperty()
   @Expose()
-  itemOfferedId: string;
+  itemOfferedId: number;
 
   @ApiPropertyOptional()
   @Expose()
-  itemRequestedId?: string;
+  itemRequestedId?: number;
 
   @ApiPropertyOptional()
   @Expose()
@@ -103,19 +103,19 @@ export class TradeResponseDto {
 export class ReviewResponseDto {
   @ApiProperty()
   @Expose()
-  id: string;
+  id: number;
 
   @ApiProperty()
   @Expose()
-  tradeId: string;
+  tradeId: number;
 
   @ApiProperty()
   @Expose()
-  reviewerId: string;
+  reviewerId: number;
 
   @ApiProperty()
   @Expose()
-  reviewedTraderId: string;
+  reviewedTraderId: number;
 
   @ApiProperty()
   @Expose()
@@ -145,19 +145,19 @@ export class ReviewResponseDto {
 export class TradeRatingResponseDto {
   @ApiProperty()
   @Expose()
-  id: string;
+  id: number;
 
   @ApiProperty()
   @Expose()
-  tradeId: string;
+  tradeId: number;
 
   @ApiProperty()
   @Expose()
-  raterId: string;
+  raterId: number;
 
   @ApiProperty()
   @Expose()
-  ratedTraderId: string;
+  ratedTraderId: number;
 
   @ApiProperty()
   @Expose()

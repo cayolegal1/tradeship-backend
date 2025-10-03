@@ -53,7 +53,7 @@ export class PaymentService {
     });
   }
 
-  async getUserWallet(userId: string): Promise<WalletResponseDto> {
+  async getUserWallet(userId: number): Promise<WalletResponseDto> {
     const wallet = await this.prisma.userWallet.findUnique({
       where: { userId },
     });
@@ -69,7 +69,7 @@ export class PaymentService {
     return this.convertWalletToResponseDto(wallet);
   }
 
-  async getPaymentMethods(userId: string): Promise<PaymentMethodResponseDto[]> {
+  async getPaymentMethods(userId: number): Promise<PaymentMethodResponseDto[]> {
     const paymentMethods = await this.prisma.paymentMethod.findMany({
       where: { userId, isActive: true },
       orderBy: { createdAt: 'desc' },
@@ -78,7 +78,7 @@ export class PaymentService {
     return paymentMethods.map((method) => new PaymentMethodResponseDto(method));
   }
 
-  async getBankAccounts(userId: string): Promise<BankAccountResponseDto[]> {
+  async getBankAccounts(userId: number): Promise<BankAccountResponseDto[]> {
     const bankAccounts = await this.prisma.bankAccount.findMany({
       where: { userId, isActive: true },
       orderBy: { createdAt: 'desc' },
@@ -88,7 +88,7 @@ export class PaymentService {
   }
 
   async getTransactions(
-    userId: string,
+    userId: number,
     paginationDto: PaginationDto,
   ): Promise<PaginatedResponseDto<TransactionResponseDto>> {
     const { page, limit, skip } = paginationDto;
@@ -133,9 +133,9 @@ export class PaymentService {
   }
 
   async deposit(
-    userId: string,
+    userId: number,
     depositRequestDto: DepositRequestDto,
-  ): Promise<{ message: string; transactionId: string }> {
+  ): Promise<{ message: string; transactionId: number }> {
     const { amount, paymentMethodId, description } = depositRequestDto;
 
     // Get or create wallet
@@ -202,9 +202,9 @@ export class PaymentService {
   }
 
   async withdraw(
-    userId: string,
+    userId: number,
     withdrawalRequestDto: WithdrawalRequestDto,
-  ): Promise<{ message: string; transactionId: string }> {
+  ): Promise<{ message: string; transactionId: number }> {
     const { amount, bankAccountId, description } = withdrawalRequestDto;
 
     // Get wallet
@@ -340,9 +340,9 @@ export class PaymentService {
   }
 
   async placeInEscrow(
-    userId: string,
+    userId: number,
     escrowOperationDto: EscrowOperationDto,
-  ): Promise<{ message: string; transactionId: string }> {
+  ): Promise<{ message: string; transactionId: number }> {
     const { amount, tradeId, description } = escrowOperationDto;
 
     // Get wallet
@@ -409,9 +409,9 @@ export class PaymentService {
   }
 
   async releaseFromEscrow(
-    userId: string,
+    userId: number,
     escrowOperationDto: EscrowOperationDto,
-  ): Promise<{ message: string; transactionId: string }> {
+  ): Promise<{ message: string; transactionId: number }> {
     const { amount, tradeId, description } = escrowOperationDto;
 
     // Get wallet
@@ -467,9 +467,9 @@ export class PaymentService {
   }
 
   async refundFromEscrow(
-    userId: string,
+    userId: number,
     escrowOperationDto: EscrowOperationDto,
-  ): Promise<{ message: string; transactionId: string }> {
+  ): Promise<{ message: string; transactionId: number }> {
     const { amount, tradeId, description } = escrowOperationDto;
 
     // Get wallet
@@ -525,11 +525,11 @@ export class PaymentService {
   }
 
   async payShipping(
-    userId: string,
+    userId: number,
     amount: number,
-    tradeId: string,
+    tradeId: number,
     description?: string,
-  ): Promise<{ message: string; transactionId: string }> {
+  ): Promise<{ message: string; transactionId: number }> {
     // Get wallet
     const wallet = await this.prisma.userWallet.findUnique({
       where: { userId },
@@ -584,7 +584,7 @@ export class PaymentService {
     };
   }
 
-  async getWalletSummary(userId: string): Promise<{
+  async getWalletSummary(userId: number): Promise<{
     wallet: WalletResponseDto;
     recentTransactions: TransactionResponseDto[];
     withdrawalLimits: {

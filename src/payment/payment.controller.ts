@@ -7,6 +7,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ParseIntPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -220,13 +221,16 @@ export class PaymentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async payShipping(
     @CurrentUser() user: any,
-    @Body() body: { amount: number; tradeId: string; description?: string },
+    @Body('amount') amount: number,
+    @Body('tradeId', ParseIntPipe) tradeId: number,
+    @Body('description') description?: string,
   ): Promise<SuccessResponseDto> {
+    const amountNumber = Number(amount);
     const result = await this.paymentService.payShipping(
       user.id,
-      body.amount,
-      body.tradeId,
-      body.description,
+      amountNumber,
+      tradeId,
+      description,
     );
     return new SuccessResponseDto(result.message);
   }

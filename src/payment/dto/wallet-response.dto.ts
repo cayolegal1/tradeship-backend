@@ -4,11 +4,11 @@ import { Expose } from 'class-transformer';
 export class WalletResponseDto {
   @ApiProperty()
   @Expose()
-  id: string;
+  id: number;
 
   @ApiProperty()
   @Expose()
-  userId: string;
+  userId: number;
 
   @ApiProperty()
   @Expose()
@@ -59,11 +59,11 @@ export class WalletResponseDto {
 export class PaymentMethodResponseDto {
   @ApiProperty()
   @Expose()
-  id: string;
+  id: number;
 
   @ApiProperty()
   @Expose()
-  userId: string;
+  userId: number;
 
   @ApiProperty()
   @Expose()
@@ -106,11 +106,11 @@ export class PaymentMethodResponseDto {
 export class BankAccountResponseDto {
   @ApiProperty()
   @Expose()
-  id: string;
+  id: number;
 
   @ApiProperty()
   @Expose()
-  userId: string;
+  userId: number;
 
   @ApiProperty()
   @Expose()
@@ -157,11 +157,11 @@ export class BankAccountResponseDto {
 export class TransactionResponseDto {
   @ApiProperty()
   @Expose()
-  id: string;
+  id: number;
 
   @ApiProperty()
   @Expose()
-  walletId: string;
+  walletId: number;
 
   @ApiProperty()
   @Expose()
@@ -189,11 +189,11 @@ export class TransactionResponseDto {
 
   @ApiProperty()
   @Expose()
-  paymentMethodId: string;
+  paymentMethodId: number;
 
   @ApiProperty()
   @Expose()
-  tradeId: string;
+  tradeId: number;
 
   @ApiProperty()
   @Expose()

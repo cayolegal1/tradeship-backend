@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDecimal, IsString, IsOptional, Min, Max } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Type } from 'class-transformer';
+import { IsNumber, IsInt, IsOptional, IsString, Min, Max } from 'class-validator';
 
 export class DepositRequestDto {
   @ApiProperty({
@@ -9,18 +9,19 @@ export class DepositRequestDto {
     minimum: 1.0,
     maximum: 10000.0,
   })
-  @Transform(({ value }) => parseFloat(value))
-  @IsDecimal({ decimal_digits: '0,2' })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
   @Min(1.0)
   @Max(10000.0)
   amount: number;
 
   @ApiProperty({
     description: 'Payment method ID',
-    example: 'pm_1234567890',
+    example: 1,
   })
-  @IsString()
-  paymentMethodId: string;
+  @Type(() => Number)
+  @IsInt()
+  paymentMethodId: number;
 
   @ApiPropertyOptional({
     description: 'Description for the deposit',

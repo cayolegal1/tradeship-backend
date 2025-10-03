@@ -8,7 +8,9 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Res,
 } from '@nestjs/common';
+
 import {
   ApiTags,
   ApiOperation,
@@ -31,6 +33,7 @@ import {
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { SuccessResponseDto } from '../common/dto/response.dto';
+import { Response } from 'express';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -61,8 +64,8 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiBody({ type: LoginDto })
-  async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
-    return this.authService.login(loginDto);
+  async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response): Promise<AuthResponseDto> {
+    return await this.authService.login(loginDto, res);
   }
 
   @Get('user')

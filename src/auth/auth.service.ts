@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Response } from 'express';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -102,7 +103,10 @@ export class AuthService {
     };
   }
 
-  async login(loginDto: LoginDto): Promise<AuthResponseDto> {
+  async login(
+    loginDto: LoginDto,
+    response: Response,
+  ): Promise<AuthResponseDto> {
     const { email, password } = loginDto;
 
     // Find user by email
@@ -139,6 +143,13 @@ export class AuthService {
 
     // Get user with profile
     const userWithProfile = await this.getUserWithProfile(user.id);
+
+    response.cookie('jwt', tokens.accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      priority: 'high',
+    });
 
     return {
       user: userWithProfile,

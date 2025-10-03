@@ -25,30 +25,30 @@ services:
     networks:
       - default
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://paolo:admin123@db:5432/tradeshipdb?schema=public
-      - JWT_SECRET=bd40bda70a2305eb1c49bbb959984af7777615add5811da3a40c6ac09cb08872bc85dfa8
-      - JWT_REFRESH_SECRET=bd40bda70a2305eb1c49bbb959984af7777615add5811da3a40c6ac09cb08872bc85dfa8
-      - JWT_EXPIRES_IN=7d
-      - JWT_REFRESH_EXPIRES_IN=30d
-      - EMAIL_HOST=mailhog
-      - EMAIL_PORT=1025
-      - CORS_ORIGIN=http://localhost:3000
-    depends_on:
-      - db
-      - mailhog
-    networks:
-      - default
-    volumes:
-      - .:/app
-      - /app/node_modules
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - NODE_ENV=development
+  #     - DATABASE_URL=postgresql://paolo:admin123@db:5432/tradeshipdb?schema=public
+  #     - JWT_SECRET=bd40bda70a2305eb1c49bbb959984af7777615add5811da3a40c6ac09cb08872bc85dfa8
+  #     - JWT_REFRESH_SECRET=bd40bda70a2305eb1c49bbb959984af7777615add5811da3a40c6ac09cb08872bc85dfa8
+  #     - JWT_EXPIRES_IN=7d
+  #     - JWT_REFRESH_EXPIRES_IN=30d
+  #     - EMAIL_HOST=mailhog
+  #     - EMAIL_PORT=1025
+  #     - CORS_ORIGIN=http://localhost:3000
+  #   depends_on:
+  #     - db
+  #     - mailhog
+  #   networks:
+  #     - default
+  #   volumes:
+  #     - .:/app
+  #     - /app/node_modules
 
 networks:
   default:

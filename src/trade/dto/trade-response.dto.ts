@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose } from 'class-transformer';
 
 export class TradeResponseDto {
   @ApiProperty()

@@ -4,8 +4,13 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
-
+import { ConfigService } from '@nestjs/config';
+import { plainToInstance } from 'class-transformer';
+import { validate, ValidationError } from 'class-validator';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { Express } from 'express';
 // services
 import { PrismaService } from '../common/prisma/prisma.service';
 
@@ -26,17 +31,43 @@ import {
 } from '../common/dto/pagination.dto';
 import { GetItemsDto } from './dto/get-items.dto';
 
+type UploadedImageMetadata = {
+  storagePath: string;
+  url: string;
+  originalName: string;
+  mimeType?: string;
+  fileSize?: number;
+};
+
 @Injectable()
 export class TradeService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(TradeService.name);
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  private supabaseClient: SupabaseClient | null = null;
+  private supabaseBucket: string | null = null;
 
   private convertItemToResponseDto(item: any): ItemResponseDto {
+    const shippingDetails = item?.shippingDetails
+      ? {
+          ...item.shippingDetails,
+          shippingWeight: Number(item.shippingDetails.shippingWeight),
+          length: Number(item.shippingDetails.length),
+          width: Number(item.shippingDetails.width),
+          height: Number(item.shippingDetails.height),
+        }
+      : undefined;
+
     return new ItemResponseDto({
       ...item,
-      estimatedValue: Number(item.estimatedValue),
+      price: Number(item.price),
       minimumTradeValue: item.minimumTradeValue
         ? Number(item.minimumTradeValue)
         : undefined,
+      shippingDetails,
     });
   }
 
@@ -47,6 +78,256 @@ export class TradeService {
     });
   }
 
+  async prepareCreateItemDto(raw: Record<string, any>): Promise<CreateItemDto> {
+    const normalized = this.normalizeCreateItemPayload(raw);
+    const dto = plainToInstance(CreateItemDto, normalized);
+    const errors = await validate(dto, {
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    });
+    if (errors.length) {
+      throw new BadRequestException(
+        `Invalid item payload: ${this.formatValidationErrors(errors)}`,
+      );
+    }
+    return dto;
+  }
+
+  private normalizeCreateItemPayload(
+    raw: Record<string, any>,
+  ): Record<string, any> {
+    if (!raw) {
+      return {};
+    }
+    const parsedRoot = this.parseJsonIfPossible<Record<string, any>>(raw.root);
+    const parsedShipping =
+      this.parseJsonIfPossible<Record<string, any>>(raw.shipping) ??
+      parsedRoot?.shipping;
+    const payload: Record<string, any> = {
+      name: raw.name ?? raw.title ?? raw.itemName ?? parsedRoot?.name,
+      description:
+        raw.description ?? raw.details ?? raw.body ?? parsedRoot?.description,
+      price: raw.price ?? raw.estimatedValue ?? parsedRoot?.price,
+      tradePreferences:
+        raw.tradePreferences ?? parsedRoot?.tradePreferences ?? raw.preferences,
+      minimumTradeValue:
+        raw.minimumTradeValue ??
+        parsedRoot?.minimumTradeValue ??
+        raw.minTradeValue,
+      acceptsCashOffers:
+        raw.acceptsCashOffers ??
+        parsedRoot?.acceptsCashOffers ??
+        raw.cashOffers,
+    };
+    const interests =
+      this.parseInterests(raw['interests[]']) ??
+      this.parseInterests(raw.interests) ??
+      this.parseInterests(parsedRoot?.interests);
+    if (interests?.length) {
+      payload.interests = interests;
+    }
+    const shippingWeight =
+      raw['shipping[weight]'] ??
+      parsedShipping?.weight ??
+      raw.weight ??
+      raw.shippingWeight;
+    const shippingLength =
+      raw['shipping[dimensions][length]'] ??
+      parsedShipping?.dimensions?.length ??
+      raw.length ??
+      raw.shippingLength;
+    const shippingWidth =
+      raw['shipping[dimensions][width]'] ??
+      parsedShipping?.dimensions?.width ??
+      raw.width ??
+      raw.shippingWidth;
+    const shippingHeight =
+      raw['shipping[dimensions][height]'] ??
+      parsedShipping?.dimensions?.height ??
+      raw.height ??
+      raw.shippingHeight;
+    if (
+      shippingWeight !== undefined ||
+      shippingLength !== undefined ||
+      shippingWidth !== undefined ||
+      shippingHeight !== undefined
+    ) {
+      payload.shipping = {
+        weight: shippingWeight,
+        dimensions: {
+          length: shippingLength,
+          width: shippingWidth,
+          height: shippingHeight,
+        },
+      };
+    } else if (parsedShipping) {
+      payload.shipping = parsedShipping;
+    }
+    return payload;
+  }
+
+  private parseInterests(value: any): number[] | undefined {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+    let rawValues: any[] = [];
+    if (Array.isArray(value)) {
+      rawValues = value;
+    } else if (typeof value === 'string') {
+      const parsedJson = this.parseJsonIfPossible<any[]>(value);
+      if (parsedJson) {
+        rawValues = parsedJson;
+      } else {
+        rawValues = value.split(',');
+      }
+    } else {
+      rawValues = [value];
+    }
+    const numeric = rawValues
+      .map((entry) => {
+        if (typeof entry === 'number') {
+          return entry;
+        }
+        const parsed = parseInt(String(entry).trim(), 10);
+        return Number.isNaN(parsed) ? undefined : parsed;
+      })
+      .filter((val): val is number => val !== undefined);
+    return numeric.length ? numeric : undefined;
+  }
+
+  private parseJsonIfPossible<T>(value: any): T | undefined {
+    if (typeof value !== 'string') {
+      return undefined;
+    }
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private formatValidationErrors(errors: ValidationError[]): string {
+    const messages: string[] = [];
+    const walk = (items: ValidationError[], parent?: string) => {
+      for (const error of items) {
+        const propertyPath = parent
+          ? `${parent}.${error.property}`
+          : error.property;
+        if (error.constraints) {
+          messages.push(
+            `${propertyPath}: ${Object.values(error.constraints).join(', ')}`,
+          );
+        }
+        if (error.children?.length) {
+          walk(error.children, propertyPath);
+        }
+      }
+    };
+    walk(errors);
+    return messages.join('; ');
+  }
+
+  private getSupabaseClient(): SupabaseClient {
+    if (!this.supabaseClient) {
+      const url =
+        this.configService.get<string>('SUPABASE_URL') ??
+        this.configService.get<string>('SUPABASE_PROJECT_URL');
+      const key =
+        this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY') ??
+        this.configService.get<string>('SUPABASE_SERVICE_KEY');
+      if (!url || !key) {
+        throw new BadRequestException('Supabase storage is not configured');
+      }
+      this.supabaseBucket =
+        this.configService.get<string>('SUPABASE_ITEMS_BUCKET') ??
+        'trade-items';
+      this.supabaseClient = createClient(url, key);
+    }
+    return this.supabaseClient;
+  }
+
+  private getSupabaseBucket(): string {
+    if (!this.supabaseBucket) {
+      this.getSupabaseClient();
+    }
+    return this.supabaseBucket ?? 'trade-items';
+  }
+
+  private sanitizeFileName(filename: string): string {
+    if (!filename) {
+      return 'item-image';
+    }
+    return filename
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9._-]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase();
+  }
+
+  private async uploadItemImages(
+    itemId: number,
+    files: Express.Multer.File[],
+  ): Promise<UploadedImageMetadata[]> {
+    if (!files?.length) {
+      return [];
+    }
+    const client = this.getSupabaseClient();
+    const bucket = this.getSupabaseBucket();
+    const uploads: UploadedImageMetadata[] = [];
+    for (const file of files) {
+      const safeName = this.sanitizeFileName(file.originalname ?? '');
+      const uniqueName = safeName
+        ? `${Date.now()}-${safeName}`
+        : `${Date.now()}`;
+      const path = `${itemId}/${uniqueName}`;
+      this.logger.log(
+        `Uploading: ${file.originalname} (${file.mimetype}, ${file.size} bytes) to ${bucket}/${path}`,
+      );
+      const { error } = await client.storage
+        .from(bucket)
+        .upload(path, file.buffer, {
+          contentType: file.mimetype ?? 'application/octet-stream',
+        });
+      if (error) {
+        this.logger.error(
+          `Supabase upload error for ${path}: ${error.message}`,
+        );
+        if (uploads.length) {
+          await this.removeSupabaseFiles(
+            uploads.map((item) => item.storagePath),
+          );
+        }
+        throw new BadRequestException(
+          `Unable to upload image ${file.originalname ?? safeName}: ${error.message}`,
+        );
+      }
+      const { data } = client.storage.from(bucket).getPublicUrl(path);
+      uploads.push({
+        storagePath: path,
+        url: data.publicUrl,
+        originalName: file.originalname ?? safeName,
+        mimeType: file.mimetype,
+        fileSize: file.size,
+      });
+      this.logger.log(`Uploaded OK: ${path} → ${data.publicUrl}`);
+    }
+    return uploads;
+  }
+
+  private async removeSupabaseFiles(paths: string[]): Promise<void> {
+    if (!paths.length) {
+      return;
+    }
+    try {
+      const client = this.getSupabaseClient();
+      const bucket = this.getSupabaseBucket();
+      await client.storage.from(bucket).remove(paths);
+    } catch {
+      // Ignore cleanup errors to avoid masking the original issue
+    }
+  }
   // Interest Management
   async getInterests(): Promise<InterestResponseDto[]> {
     const interests = await this.prisma.interest.findMany({
@@ -77,17 +358,77 @@ export class TradeService {
   async createItem(
     userId: number,
     createItemDto: CreateItemDto,
+    options: { images?: Express.Multer.File[] } = {},
   ): Promise<ItemResponseDto> {
-    const { interests, ...itemData } = createItemDto;
+    const { interests, shipping, ...itemData } = createItemDto;
+    const { images = [] } = options;
 
-    const item = await this.prisma.item.create({
-      data: {
-        ...itemData,
-        ownerId: userId,
-        interests: {
-          connect: interests?.map((id) => ({ id })) || [],
+    const createdItem = await this.prisma.$transaction(async (tx) => {
+      const item = await tx.item.create({
+        data: {
+          ...itemData,
+          owner: {
+            connect: { id: userId },
+          },
+          interests: interests?.length
+            ? {
+                connect: interests.map((id) => ({ id })),
+              }
+            : undefined,
         },
-      },
+      });
+
+      if (shipping?.weight && shipping?.dimensions) {
+        await tx.shippingDetails.create({
+          data: {
+            itemId: item.id,
+            shippingWeight: shipping.weight,
+            length: shipping.dimensions.length,
+            width: shipping.dimensions.width,
+            height: shipping.dimensions.height,
+          },
+        });
+      }
+
+      return item;
+    });
+
+    let uploadedImages: UploadedImageMetadata[] = [];
+    try {
+      if (images.length) {
+        uploadedImages = await this.uploadItemImages(createdItem.id, images);
+        if (uploadedImages.length) {
+          await this.prisma.itemImage.createMany({
+            data: uploadedImages.map((image, index) => ({
+              itemId: createdItem.id,
+              storagePath: image.storagePath,
+              url: image.url,
+              originalName: image.originalName,
+              mimeType: image.mimeType,
+              fileSize: image.fileSize,
+              isPrimary: index === 0,
+            })),
+          });
+        }
+      }
+    } catch (error) {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.itemImage.deleteMany({ where: { itemId: createdItem.id } });
+        await tx.shippingDetails.deleteMany({
+          where: { itemId: createdItem.id },
+        });
+        await tx.item.delete({ where: { id: createdItem.id } });
+      });
+      if (uploadedImages.length) {
+        await this.removeSupabaseFiles(
+          uploadedImages.map((img) => img.storagePath),
+        );
+      }
+      throw error;
+    }
+
+    const itemWithRelations = await this.prisma.item.findUnique({
+      where: { id: createdItem.id },
       include: {
         interests: true,
         images: true,
@@ -96,7 +437,11 @@ export class TradeService {
       },
     });
 
-    return this.convertItemToResponseDto(item);
+    if (!itemWithRelations) {
+      throw new NotFoundException('Item could not be created');
+    }
+
+    return this.convertItemToResponseDto(itemWithRelations);
   }
 
   async getItems(
@@ -213,9 +558,9 @@ export class TradeService {
       throw new NotFoundException('Item not found or you do not own this item');
     }
 
-    const { interests, ...itemData } = updateData;
+    const { interests, shipping, ...itemData } = updateData;
 
-    const updatedItem = await this.prisma.item.update({
+    await this.prisma.item.update({
       where: { id: itemId },
       data: {
         ...itemData,
@@ -225,6 +570,29 @@ export class TradeService {
             }
           : undefined,
       },
+    });
+
+    if (shipping?.weight && shipping?.dimensions) {
+      await this.prisma.shippingDetails.upsert({
+        where: { itemId },
+        update: {
+          shippingWeight: shipping.weight,
+          length: shipping.dimensions.length,
+          width: shipping.dimensions.width,
+          height: shipping.dimensions.height,
+        },
+        create: {
+          itemId,
+          shippingWeight: shipping.weight,
+          length: shipping.dimensions.length,
+          width: shipping.dimensions.width,
+          height: shipping.dimensions.height,
+        },
+      });
+    }
+
+    const updatedItem = await this.prisma.item.findUnique({
+      where: { id: itemId },
       include: {
         interests: true,
         images: true,
@@ -232,6 +600,10 @@ export class TradeService {
         shippingDetails: true,
       },
     });
+
+    if (!updatedItem) {
+      throw new NotFoundException('Item could not be updated');
+    }
 
     return this.convertItemToResponseDto(updatedItem);
   }

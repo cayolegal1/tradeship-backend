@@ -28,7 +28,6 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import {
-  UserResponseDto,
   UserWithProfileResponseDto,
   UserProfileResponseDto,
   AuthResponseDto,
@@ -67,7 +66,10 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiBody({ type: LoginDto })
-  async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response): Promise<AuthResponseDto> {
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthResponseDto> {
     return await this.authService.login(loginDto, res);
   }
 
@@ -278,7 +280,8 @@ export class AuthController {
   })
   async bulkUpdateInterests(
     @CurrentUser() user: any,
-    @Body('interestIds', new ParseArrayPipe({ items: Number, optional: false })) interestIds: number[],
+    @Body('interestIds', new ParseArrayPipe({ items: Number, optional: false }))
+    interestIds: number[],
   ): Promise<{ message: string; interests: string[] }> {
     return this.authService.bulkUpdateInterests(user.id, interestIds);
   }

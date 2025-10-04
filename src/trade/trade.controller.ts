@@ -1,3 +1,6 @@
+import { FilesInterceptor } from '@nestjs/platform-express';
+import * as multer from 'multer';
+import type { Express } from 'express';
 import {
   Controller,
   Get,
@@ -11,6 +14,8 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,6 +23,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiQuery,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { TradeService } from './trade.service';
 import { CreateItemDto } from './dto/create-item.dto';
@@ -38,6 +44,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { SuccessResponseDto } from '../common/dto/response.dto';
 import { GetItemsDto } from './dto/get-items.dto';
+// import { FileFilterCallback } from 'multer';
 
 @ApiTags('Trading')
 @Controller('trade')
@@ -79,7 +86,8 @@ export class TradeController {
   }
 
   // Item Management
-  @Post('items')
+  /* @Post('items')
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create a new item' })
   @ApiResponse({
     status: 201,
@@ -88,11 +96,93 @@ export class TradeController {
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'images[]', maxCount: 5 },
+        { name: 'images', maxCount: 5 },
+      ],
+      {
+        storage: multer.memoryStorage(),
+        limits: {
+          fileSize: 5 * 1024 * 1024,
+          files: 5,
+        },
+      },
+    ),
+  )
   async createItem(
     @CurrentUser() user: any,
-    @Body() createItemDto: CreateItemDto,
+    @Body() body: Record<string, any>,
+    @UploadedFiles()
+    files: Record<string, Express.Multer.File[]>,
   ): Promise<ItemResponseDto> {
-    return this.tradeService.createItem(user.id, createItemDto);
+    const dto = await this.tradeService.prepareCreateItemDto(body);
+    const uploadedImages = [
+      ...(files?.['images[]'] ?? []),
+      ...(files?.images ?? []),
+    ];
+
+    return this.tradeService.createItem(user.id, dto, {
+      images: uploadedImages,
+    });
+  } */
+  /* @Post('items')
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Create a new item' })
+  @ApiResponse({ status: 201, description: 'Item created successfully' })
+  @UseInterceptors(
+    FilesInterceptor('images', 5, {
+      storage: multer.memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024, files: 5 },
+      fileFilter: (_req, file, cb) => {
+        const ok = /^image\/(png|jpe?g|webp|gif)$/.test(file.mimetype);
+        if (ok) return cb(null, true);
+        return cb(new Error('Invalid image type'), false);
+      },
+    }),
+  )
+  async createItem(
+    @CurrentUser() user: any,
+    @Body() body: any,
+    @UploadedFiles() images: Express.Multer.File[],
+  ) {
+    const dto = await this.tradeService.prepareCreateItemDto(body); // ← devuelve CreateItemDto
+    return this.tradeService.createItem(user.id, dto, { images }); // ← 3er arg: opts
+  } */
+
+  @Post('items')
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Create a new item' })
+  @ApiResponse({ status: 201, description: 'Item created successfully' })
+  @UseInterceptors(
+    FilesInterceptor('images', 5, {
+      storage: multer.memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024, files: 5 },
+      fileFilter: (
+        _req,
+        file,
+        cb: (err: Error | null, accept: boolean) => void,
+      ) => {
+        const ok = /^image\/(png|jpe?g|webp|gif)$/.test(file.mimetype);
+        return ok ? cb(null, true) : cb(new Error('Invalid image type'), false);
+      },
+    }),
+  )
+  async createItem(
+    @CurrentUser() user: any,
+    @Body() body: any,
+    @UploadedFiles() images: Express.Multer.File[],
+  ) {
+    // 1) Convertir el body (multipart) a tu CreateItemDto
+    console.log(
+      'files:',
+      images?.length,
+      images?.map((f) => f.originalname),
+    );
+    const dto = await this.tradeService.prepareCreateItemDto(body);
+    // 2) Llamar a tu service con la firma correcta
+    return this.tradeService.createItem(user.id, dto, { images });
   }
 
   @Get('items')
@@ -130,7 +220,9 @@ export class TradeController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Item not found' })
-  async getItemById(@Param('id', ParseIntPipe) itemId: number): Promise<ItemResponseDto> {
+  async getItemById(
+    @Param('id', ParseIntPipe) itemId: number,
+  ): Promise<ItemResponseDto> {
     return this.tradeService.getItemById(itemId);
   }
 

@@ -42,11 +42,19 @@ export class ItemImageResponseDto {
 
   @ApiProperty()
   @Expose()
-  image: string;
+  url: string;
 
   @ApiProperty()
   @Expose()
-  name: string;
+  originalName: string;
+
+  @ApiPropertyOptional()
+  @Expose()
+  mimeType?: string;
+
+  @ApiPropertyOptional()
+  @Expose()
+  fileSize?: number;
 
   @ApiProperty()
   @Expose()
@@ -204,7 +212,7 @@ export class ItemResponseDto {
 
   @ApiProperty()
   @Expose()
-  title: string;
+  name: string;
 
   @ApiProperty()
   @Expose()
@@ -212,7 +220,7 @@ export class ItemResponseDto {
 
   @ApiProperty()
   @Expose()
-  estimatedValue: number;
+  price: number;
 
   @ApiProperty()
   @Expose()

@@ -19,7 +19,7 @@ async function bootstrap() {
       },
     }),
   );
-  
+
   // Cookie parser middleware
   app.use(cookieParser());
 

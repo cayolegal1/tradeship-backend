@@ -2,7 +2,6 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { DepositRequestDto } from './dto/deposit.dto';

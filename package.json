@@ -36,6 +36,7 @@
     "@nestjs/throttler": "^5.0.1",
     "@nestjs/websockets": "^10.2.8",
     "@prisma/client": "^5.7.1",
+    "@supabase/supabase-js": "^2.58.0",
     "aws-sdk": "^2.1508.0",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",

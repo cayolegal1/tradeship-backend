@@ -13,7 +13,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import {
-  UserResponseDto,
+  // UserResponseDto,
   UserProfileResponseDto,
   UserWithProfileResponseDto,
   AuthResponseDto,

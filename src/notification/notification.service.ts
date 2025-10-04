@@ -33,12 +33,12 @@ export class NotificationService {
     createNotificationDto: CreateNotificationDto,
   ): Promise<NotificationResponseDto> {
     const notification = await this.prisma.notification.create({
-      data: ({
+      data: {
         ...createNotificationDto,
         expiresAt: createNotificationDto.expiresAt
           ? new Date(createNotificationDto.expiresAt)
           : null,
-      }) as Prisma.NotificationUncheckedCreateInput,
+      } as Prisma.NotificationUncheckedCreateInput,
     });
 
     return this.convertNotificationToResponseDto(notification);
@@ -336,7 +336,7 @@ export class NotificationService {
 
     // Create notification
     const notification = await this.prisma.notification.create({
-      data: ({
+      data: {
         recipientId,
         senderId: options?.senderId ?? null,
         notificationTypeId: notificationType.id,
@@ -347,7 +347,7 @@ export class NotificationService {
         metadata: options?.metadata || {},
         actionUrl: options?.actionUrl,
         expiresAt: options?.expiresAt ?? null,
-      }) as Prisma.NotificationUncheckedCreateInput,
+      } as Prisma.NotificationUncheckedCreateInput,
     });
 
     return this.convertNotificationToResponseDto(notification);
@@ -380,7 +380,7 @@ export class NotificationService {
     const notifications = await Promise.all(
       recipientIds.map((recipientId) =>
         this.prisma.notification.create({
-          data: ({
+          data: {
             recipientId,
             senderId: options?.senderId ?? null,
             notificationTypeId: notificationType.id,
@@ -391,7 +391,7 @@ export class NotificationService {
             metadata: options?.metadata || {},
             actionUrl: options?.actionUrl,
             expiresAt: options?.expiresAt ?? null,
-          }) as Prisma.NotificationUncheckedCreateInput,
+          } as Prisma.NotificationUncheckedCreateInput,
         }),
       ),
     );

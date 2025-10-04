@@ -248,10 +248,16 @@ export class NotificationController {
       ? {
           ...options,
           senderId:
-            options.senderId !== undefined ? Number(options.senderId) : undefined,
+            options.senderId !== undefined
+              ? Number(options.senderId)
+              : undefined,
           objectId:
-            options.objectId !== undefined ? String(options.objectId) : undefined,
-          expiresAt: options.expiresAt ? new Date(options.expiresAt) : undefined,
+            options.objectId !== undefined
+              ? String(options.objectId)
+              : undefined,
+          expiresAt: options.expiresAt
+            ? new Date(options.expiresAt)
+            : undefined,
         }
       : undefined;
 
@@ -303,10 +309,16 @@ export class NotificationController {
       ? {
           ...options,
           senderId:
-            options.senderId !== undefined ? Number(options.senderId) : undefined,
+            options.senderId !== undefined
+              ? Number(options.senderId)
+              : undefined,
           objectId:
-            options.objectId !== undefined ? String(options.objectId) : undefined,
-          expiresAt: options.expiresAt ? new Date(options.expiresAt) : undefined,
+            options.objectId !== undefined
+              ? String(options.objectId)
+              : undefined,
+          expiresAt: options.expiresAt
+            ? new Date(options.expiresAt)
+            : undefined,
         }
       : undefined;
 

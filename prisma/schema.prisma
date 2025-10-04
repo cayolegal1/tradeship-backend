@@ -1,59 +1,54 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DATABASE_DIRECT_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  directUrl         = env("DATABASE_DIRECT_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
-// User and Authentication Models
 model User {
-  id               Int    @id @default(autoincrement())
-  email            String    @unique
-  username         String    @unique
-  firstName        String
-  lastName         String
-  password         String
-  isActive         Boolean   @default(true)
-  agreesToTerms    Boolean   @default(false)
-  termsAgreedAt    DateTime?
-  termsVersion     String    @default("1.0")
-  profileCompleted Boolean   @default(false)
-  dateJoined       DateTime  @default(now())
-  lastLogin        DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-
-  // Relations
-  profile               UserProfile?
-  wallet                UserWallet?
-  paymentMethods        PaymentMethod[]
+  id                    Int                          @id @default(autoincrement())
+  email                 String                       @unique
+  username              String                       @unique
+  firstName             String
+  lastName              String
+  password              String
+  isActive              Boolean                      @default(true)
+  agreesToTerms         Boolean                      @default(false)
+  termsAgreedAt         DateTime?
+  termsVersion          String                       @default("1.0")
+  profileCompleted      Boolean                      @default(false)
+  dateJoined            DateTime                     @default(now())
+  lastLogin             DateTime?
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
   bankAccounts          BankAccount[]
-  shippingAddresses     ShippingAddress[]
-  shippingPreferences   ShippingPreferences?
-  paymentShippingSetup  PaymentShippingSetup?
-  termsAgreements       TermsAgreement[]
+  chatMessagesSent      ChatMessage[]                @relation("Sender")
+  chatAddedBy           ChatParticipant[]            @relation("ChatAddedBy")
+  chatParticipants      ChatParticipant[]            @relation("ChatParticipant")
+  conversationsCreated  Conversation[]               @relation("CreatedBy")
   items                 Item[]
-  tradesOffering        Trade[]                      @relation("TraderOffering")
-  tradesReceiving       Trade[]                      @relation("TraderReceiving")
-  reviewsGiven          Review[]                     @relation("Reviewer")
-  reviewsReceived       Review[]                     @relation("ReviewedTrader")
-  ratingsGiven          TradeRating[]                @relation("Rater")
-  ratingsReceived       TradeRating[]                @relation("RatedTrader")
+  batchRecipients       NotificationBatchRecipient[]
+  notificationSettings  NotificationUserSettings[]
   notificationsReceived Notification[]               @relation("Recipient")
   notificationsSent     Notification[]               @relation("Sender")
-  notificationSettings  NotificationUserSettings[]
-  conversationsCreated  Conversation[]               @relation("CreatedBy")
-  chatParticipants      ChatParticipant[]            @relation("ChatParticipant")
-  chatAddedBy           ChatParticipant[]            @relation("ChatAddedBy")
-  chatMessagesSent      ChatMessage[]                @relation("Sender")
-  batchRecipients       NotificationBatchRecipient[]
+  paymentMethods        PaymentMethod[]
+  paymentShippingSetup  PaymentShippingSetup?
+  reviewsReceived       Review[]                     @relation("ReviewedTrader")
+  reviewsGiven          Review[]                     @relation("Reviewer")
+  shippingAddresses     ShippingAddress[]
+  shippingPreferences   ShippingPreferences?
+  termsAgreements       TermsAgreement[]
+  ratingsReceived       TradeRating[]                @relation("RatedTrader")
+  ratingsGiven          TradeRating[]                @relation("Rater")
+  tradesOffering        Trade[]                      @relation("TraderOffering")
+  tradesReceiving       Trade[]                      @relation("TraderReceiving")
+  profile               UserProfile?
+  wallet                UserWallet?
 
   @@index([email])
   @@index([agreesToTerms])
@@ -63,8 +58,8 @@ model User {
 }
 
 model UserProfile {
-  id                 Int     @id @default(autoincrement())
-  userId             Int     @unique
+  id                 Int        @id @default(autoincrement())
+  userId             Int        @unique
   phoneNumber        String?
   dateOfBirth        DateTime?
   bio                String?
@@ -83,10 +78,8 @@ model UserProfile {
   specialties        String?
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
-
-  // Relations
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  interests Interest[] @relation("UserInterests")
+  user               User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interests          Interest[] @relation("UserInterests")
 
   @@index([userId])
   @@index([city, state])
@@ -94,52 +87,39 @@ model UserProfile {
   @@map("user_profiles")
 }
 
-enum TraderTier {
-  BRONZE
-  SILVER
-  GOLD
-  PLATINUM
-}
-
-// Interest/Tag Model
 model Interest {
-  id          Int   @id @default(autoincrement())
-  name        String   @unique
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
   description String?
-  color       String   @default("#007bff")
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  users UserProfile[] @relation("UserInterests")
-  items Item[]        @relation("ItemInterests")
+  color       String        @default("#007bff")
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  items       Item[]        @relation("ItemInterests")
+  users       UserProfile[] @relation("UserInterests")
 
   @@index([name])
   @@index([isActive])
   @@map("interests")
 }
 
-// Notification System Models
 model NotificationType {
-  id                  Int               @id @default(autoincrement())
-  name                String               @unique
+  id                  Int                        @id @default(autoincrement())
+  name                String                     @unique
   displayName         String
   description         String?
-  isActive            Boolean              @default(true)
-  requiresAction      Boolean              @default(false)
-  autoMarkRead        Boolean              @default(false)
-  defaultEmailEnabled Boolean              @default(true)
-  defaultPushEnabled  Boolean              @default(true)
-  defaultInAppEnabled Boolean              @default(true)
-  priority            NotificationPriority @default(NORMAL)
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-
-  // Relations
-  notifications Notification[]
-  userSettings  NotificationUserSettings[]
-  batches       NotificationBatch[]
+  isActive            Boolean                    @default(true)
+  requiresAction      Boolean                    @default(false)
+  autoMarkRead        Boolean                    @default(false)
+  defaultEmailEnabled Boolean                    @default(true)
+  defaultPushEnabled  Boolean                    @default(true)
+  defaultInAppEnabled Boolean                    @default(true)
+  priority            NotificationPriority       @default(NORMAL)
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
+  batches             NotificationBatch[]
+  userSettings        NotificationUserSettings[]
+  notifications       Notification[]
 
   @@index([name])
   @@index([isActive])
@@ -147,26 +127,17 @@ model NotificationType {
   @@map("notification_types")
 }
 
-enum NotificationPriority {
-  LOW
-  NORMAL
-  HIGH
-  URGENT
-}
-
 model NotificationUserSettings {
-  id                 Int   @id @default(autoincrement())
+  id                 Int              @id @default(autoincrement())
   userId             Int
   notificationTypeId Int
-  emailEnabled       Boolean  @default(true)
-  pushEnabled        Boolean  @default(true)
-  inAppEnabled       Boolean  @default(true)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  // Relations
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  notificationType NotificationType @relation(fields: [notificationTypeId], references: [id], onDelete: Cascade)
+  emailEnabled       Boolean          @default(true)
+  pushEnabled        Boolean          @default(true)
+  inAppEnabled       Boolean          @default(true)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  notificationType   NotificationType @relation(fields: [notificationTypeId], references: [id], onDelete: Cascade)
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, notificationTypeId])
   @@index([userId])
@@ -175,7 +146,7 @@ model NotificationUserSettings {
 }
 
 model Notification {
-  id                 Int    @id @default(autoincrement())
+  id                 Int                          @id @default(autoincrement())
   recipientId        Int
   senderId           Int?
   notificationTypeId Int
@@ -183,23 +154,21 @@ model Notification {
   message            String
   contentType        String?
   objectId           String?
-  isRead             Boolean   @default(false)
+  isRead             Boolean                      @default(false)
   readAt             DateTime?
-  emailSent          Boolean   @default(false)
+  emailSent          Boolean                      @default(false)
   emailSentAt        DateTime?
-  pushSent           Boolean   @default(false)
+  pushSent           Boolean                      @default(false)
   pushSentAt         DateTime?
-  metadata           Json      @default("{}")
+  metadata           Json                         @default("{}")
   actionUrl          String?
   expiresAt          DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-
-  // Relations
-  recipient        User                         @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  sender           User?                        @relation("Sender", fields: [senderId], references: [id], onDelete: SetNull)
-  notificationType NotificationType             @relation(fields: [notificationTypeId], references: [id], onDelete: Cascade)
-  batchRecipients  NotificationBatchRecipient[]
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+  batchRecipients    NotificationBatchRecipient[]
+  notificationType   NotificationType             @relation(fields: [notificationTypeId], references: [id], onDelete: Cascade)
+  recipient          User                         @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  sender             User?                        @relation("Sender", fields: [senderId], references: [id])
 
   @@index([recipientId, createdAt])
   @@index([recipientId, isRead])
@@ -211,23 +180,21 @@ model Notification {
 }
 
 model NotificationBatch {
-  id                 Int      @id @default(autoincrement())
+  id                 Int                          @id @default(autoincrement())
   name               String
   notificationTypeId Int
-  status             BatchStatus @default(PENDING)
+  status             BatchStatus                  @default(PENDING)
   titleTemplate      String
   messageTemplate    String
   scheduledFor       DateTime?
-  totalRecipients    Int         @default(0)
-  sentCount          Int         @default(0)
-  failedCount        Int         @default(0)
-  createdAt          DateTime    @default(now())
+  totalRecipients    Int                          @default(0)
+  sentCount          Int                          @default(0)
+  failedCount        Int                          @default(0)
+  createdAt          DateTime                     @default(now())
   startedAt          DateTime?
   completedAt        DateTime?
-
-  // Relations
-  notificationType NotificationType             @relation(fields: [notificationTypeId], references: [id], onDelete: Cascade)
-  recipients       NotificationBatchRecipient[]
+  recipients         NotificationBatchRecipient[]
+  notificationType   NotificationType             @relation(fields: [notificationTypeId], references: [id], onDelete: Cascade)
 
   @@index([status])
   @@index([scheduledFor])
@@ -235,27 +202,17 @@ model NotificationBatch {
   @@map("notification_batches")
 }
 
-enum BatchStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-  CANCELLED
-}
-
 model NotificationBatchRecipient {
-  id             Int          @id @default(autoincrement())
+  id             Int               @id @default(autoincrement())
   batchId        Int
   recipientId    Int
   notificationId Int?
-  status         RecipientStatus @default(PENDING)
+  status         RecipientStatus   @default(PENDING)
   errorMessage   String?
   sentAt         DateTime?
-
-  // Relations
-  batch        NotificationBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
-  recipient    User              @relation(fields: [recipientId], references: [id], onDelete: Cascade)
-  notification Notification?     @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  batch          NotificationBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  notification   Notification?     @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  recipient      User              @relation(fields: [recipientId], references: [id], onDelete: Cascade)
 
   @@unique([batchId, recipientId])
   @@index([batchId])
@@ -264,34 +221,24 @@ model NotificationBatchRecipient {
   @@map("notification_batch_recipients")
 }
 
-enum RecipientStatus {
-  PENDING
-  SENT
-  FAILED
-  SKIPPED
-}
-
-// Chat System Models
 model Conversation {
-  id                   Int           @id @default(autoincrement())
-  conversationType     ConversationType @default(DIRECT)
+  id                   Int               @id @default(autoincrement())
+  conversationType     ConversationType  @default(DIRECT)
   title                String?
   description          String?
   createdById          Int
   contentType          String?
   objectId             String?
-  isActive             Boolean          @default(true)
-  isArchived           Boolean          @default(false)
-  isPrivate            Boolean          @default(true)
-  allowNewParticipants Boolean          @default(false)
+  isActive             Boolean           @default(true)
+  isArchived           Boolean           @default(false)
+  isPrivate            Boolean           @default(true)
+  allowNewParticipants Boolean           @default(false)
   lastMessageAt        DateTime?
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
-
-  // Relations
-  createdBy    User              @relation("CreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  participants ChatParticipant[]
-  messages     ChatMessage[]
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  messages             ChatMessage[]
+  participants         ChatParticipant[]
+  createdBy            User              @relation("CreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([conversationType])
   @@index([createdById])
@@ -301,15 +248,8 @@ model Conversation {
   @@map("conversations")
 }
 
-enum ConversationType {
-  DIRECT
-  GROUP
-  TRADE
-  SUPPORT
-}
-
 model ChatParticipant {
-  id             Int          @id @default(autoincrement())
+  id             Int             @id @default(autoincrement())
   conversationId Int
   userId         Int
   role           ParticipantRole @default(MEMBER)
@@ -319,11 +259,9 @@ model ChatParticipant {
   joinedAt       DateTime        @default(now())
   leftAt         DateTime?
   lastReadAt     DateTime?
-
-  // Relations
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  user         User         @relation("ChatParticipant", fields: [userId], references: [id], onDelete: Cascade)
-  addedBy      User?        @relation("ChatAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
+  addedBy        User?           @relation("ChatAddedBy", fields: [addedById], references: [id])
+  conversation   Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User            @relation("ChatParticipant", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([conversationId, userId])
   @@index([conversationId, isActive])
@@ -332,35 +270,27 @@ model ChatParticipant {
   @@map("chat_participants")
 }
 
-enum ParticipantRole {
-  MEMBER
-  ADMIN
-  OWNER
-}
-
 model ChatMessage {
-  id             Int      @id @default(autoincrement())
+  id             Int           @id @default(autoincrement())
   conversationId Int
   senderId       Int
-  messageType    MessageType @default(TEXT)
+  messageType    MessageType   @default(TEXT)
   content        String
   file           String?
   fileName       String?
   fileSize       Int?
   mimeType       String?
   replyToId      Int?
-  isEdited       Boolean     @default(false)
-  isDeleted      Boolean     @default(false)
+  isEdited       Boolean       @default(false)
+  isDeleted      Boolean       @default(false)
   deliveredAt    DateTime?
-  metadata       Json        @default("{}")
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-
-  // Relations
-  conversation Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender       User          @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
-  replyTo      ChatMessage?  @relation("ReplyTo", fields: [replyToId], references: [id], onDelete: SetNull)
-  replies      ChatMessage[] @relation("ReplyTo")
+  metadata       Json          @default("{}")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  replyTo        ChatMessage?  @relation("ReplyTo", fields: [replyToId], references: [id])
+  replies        ChatMessage[] @relation("ReplyTo")
+  sender         User          @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([conversationId, createdAt])
   @@index([senderId])
@@ -370,34 +300,21 @@ model ChatMessage {
   @@map("chat_messages")
 }
 
-enum MessageType {
-  TEXT
-  IMAGE
-  FILE
-  SYSTEM
-  TRADE_OFFER
-  LOCATION
-  STICKER
-}
-
-// Payment System Models
 model UserWallet {
-  id                     Int   @id @default(autoincrement())
-  userId                 Int   @unique
+  id                     Int                 @id @default(autoincrement())
+  userId                 Int                 @unique
   stripeCustomerId       String?
-  availableBalance       Decimal  @default(0.00) @db.Decimal(10, 2)
-  escrowBalance          Decimal  @default(0.00) @db.Decimal(10, 2)
-  totalDeposited         Decimal  @default(0.00) @db.Decimal(12, 2)
-  totalWithdrawn         Decimal  @default(0.00) @db.Decimal(12, 2)
-  totalShippingPaid      Decimal  @default(0.00) @db.Decimal(10, 2)
-  withdrawalLimitDaily   Decimal  @default(1000.00) @db.Decimal(8, 2)
-  withdrawalLimitMonthly Decimal  @default(10000.00) @db.Decimal(10, 2)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-
-  // Relations
-  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions WalletTransaction[]
+  availableBalance       Decimal             @default(0.00) @db.Decimal(10, 2)
+  escrowBalance          Decimal             @default(0.00) @db.Decimal(10, 2)
+  totalDeposited         Decimal             @default(0.00) @db.Decimal(12, 2)
+  totalWithdrawn         Decimal             @default(0.00) @db.Decimal(12, 2)
+  totalShippingPaid      Decimal             @default(0.00) @db.Decimal(10, 2)
+  withdrawalLimitDaily   Decimal             @default(1000.00) @db.Decimal(8, 2)
+  withdrawalLimitMonthly Decimal             @default(10000.00) @db.Decimal(10, 2)
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  user                   User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions           WalletTransaction[]
 
   @@index([userId])
   @@index([stripeCustomerId])
@@ -406,20 +323,18 @@ model UserWallet {
 }
 
 model PaymentMethod {
-  id                    Int      @id @default(autoincrement())
+  id                    Int                 @id @default(autoincrement())
   userId                Int
   stripePaymentMethodId String
   paymentType           PaymentType
   lastFour              String?
   brand                 String?
-  isDefault             Boolean     @default(false)
-  isActive              Boolean     @default(true)
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @updatedAt
-
-  // Relations
-  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions WalletTransaction[]
+  isDefault             Boolean             @default(false)
+  isActive              Boolean             @default(true)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions          WalletTransaction[]
 
   @@index([userId])
   @@index([stripePaymentMethodId])
@@ -427,14 +342,8 @@ model PaymentMethod {
   @@map("payment_methods")
 }
 
-enum PaymentType {
-  CARD
-  PAYPAL
-  BANK_ACCOUNT
-}
-
 model BankAccount {
-  id                    Int   @id @default(autoincrement())
+  id                    Int      @id @default(autoincrement())
   userId                Int
   stripeBankAccountId   String
   bankName              String
@@ -446,9 +355,7 @@ model BankAccount {
   isActive              Boolean  @default(true)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([stripeBankAccountId])
@@ -457,7 +364,7 @@ model BankAccount {
 }
 
 model WalletTransaction {
-  id                    Int            @id @default(autoincrement())
+  id                    Int               @id @default(autoincrement())
   walletId              Int
   transactionType       TransactionType
   amount                Decimal           @db.Decimal(10, 2)
@@ -474,10 +381,8 @@ model WalletTransaction {
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
   completedAt           DateTime?
-
-  // Relations
-  wallet        UserWallet     @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  paymentMethod PaymentMethod? @relation(fields: [paymentMethodId], references: [id], onDelete: SetNull)
+  paymentMethod         PaymentMethod?    @relation(fields: [paymentMethodId], references: [id])
+  wallet                UserWallet        @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@index([walletId])
   @@index([transactionType])
@@ -486,6 +391,281 @@ model WalletTransaction {
   @@index([tradeId])
   @@index([createdAt])
   @@map("wallet_transactions")
+}
+
+model Item {
+  id                  Int              @id @default(autoincrement())
+  name                String
+  description         String
+  price               Decimal          @db.Decimal(10, 2)
+  ownerId             Int
+  isAvailableForTrade Boolean          @default(true)
+  tradePreferences    String?
+  minimumTradeValue   Decimal?         @db.Decimal(10, 2)
+  acceptsCashOffers   Boolean          @default(true)
+  isActive            Boolean          @default(true)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  files               ItemFile[]
+  images              ItemImage[]
+  owner               User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  shippingDetails     ShippingDetails?
+  tradesAsOffered     Trade[]          @relation("ItemOffered")
+  tradesAsRequested   Trade[]          @relation("ItemRequested")
+  interests           Interest[]       @relation("ItemInterests")
+
+  @@index([ownerId])
+  @@index([isActive])
+  @@index([isAvailableForTrade])
+  @@map("items")
+}
+
+model ItemImage {
+  id           Int      @id @default(autoincrement())
+  itemId       Int
+  storagePath  String
+  url          String
+  originalName String
+  mimeType     String?
+  fileSize     Int?
+  isPrimary    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  item         Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@index([isPrimary])
+  @@map("item_images")
+}
+
+model ItemFile {
+  id          Int      @id @default(autoincrement())
+  itemId      Int
+  file        String
+  name        String
+  fileType    FileType @default(OTHER)
+  fileSize    Int?
+  mimeType    String?
+  description String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  item        Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@index([fileType])
+  @@index([isPublic])
+  @@map("item_files")
+}
+
+model ShippingDetails {
+  id             Int      @id @default(autoincrement())
+  itemId         Int      @unique
+  shippingWeight Decimal  @db.Decimal(8, 2)
+  length         Decimal  @db.Decimal(6, 2)
+  width          Decimal  @db.Decimal(6, 2)
+  height         Decimal  @db.Decimal(6, 2)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  item           Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@map("shipping_details")
+}
+
+model ShippingAddress {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  zipCode      String
+  country      String   @default("United States")
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isDefault])
+  @@map("shipping_addresses")
+}
+
+model ShippingPreferences {
+  id               Int      @id @default(autoincrement())
+  userId           Int      @unique
+  preferredCarrier Carrier  @default(USPS)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("shipping_preferences")
+}
+
+model PaymentShippingSetup {
+  id             Int            @id @default(autoincrement())
+  userId         Int            @unique
+  shippingMethod ShippingMethod @default(STANDARD)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("payment_shipping_setups")
+}
+
+model TermsAgreement {
+  id                     Int      @id @default(autoincrement())
+  userId                 Int
+  itemDetailsAccurate    Boolean  @default(false)
+  agreesToTerms          Boolean  @default(false)
+  agreesToEscrow         Boolean  @default(false)
+  understandsFundRelease Boolean  @default(false)
+  ipAddress              String?
+  userAgent              String?
+  termsVersion           String   @default("1.0")
+  createdAt              DateTime @default(now())
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([termsVersion])
+  @@map("terms_agreements")
+}
+
+model Trade {
+  id                  Int           @id @default(autoincrement())
+  traderOfferingId    Int
+  traderReceivingId   Int
+  itemOfferedId       Int
+  itemRequestedId     Int?
+  cashAmount          Decimal?      @db.Decimal(10, 2)
+  status              TradeStatus   @default(PENDING)
+  notes               String?
+  escrowReference     String?
+  estimatedCompletion DateTime?
+  createdAt           DateTime      @default(now())
+  acceptedAt          DateTime?
+  completedAt         DateTime?
+  cancelledAt         DateTime?
+  reviews             Review[]
+  ratings             TradeRating[]
+  itemOffered         Item          @relation("ItemOffered", fields: [itemOfferedId], references: [id], onDelete: Cascade)
+  itemRequested       Item?         @relation("ItemRequested", fields: [itemRequestedId], references: [id], onDelete: Cascade)
+  traderOffering      User          @relation("TraderOffering", fields: [traderOfferingId], references: [id], onDelete: Cascade)
+  traderReceiving     User          @relation("TraderReceiving", fields: [traderReceivingId], references: [id], onDelete: Cascade)
+
+  @@index([traderOfferingId])
+  @@index([traderReceivingId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("trades")
+}
+
+model Review {
+  id               Int      @id @default(autoincrement())
+  tradeId          Int
+  reviewerId       Int
+  reviewedTraderId Int
+  rating           Int
+  description      String
+  wouldTradeAgain  Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  reviewedTrader   User     @relation("ReviewedTrader", fields: [reviewedTraderId], references: [id], onDelete: Cascade)
+  reviewer         User     @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  trade            Trade    @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+
+  @@unique([tradeId, reviewerId])
+  @@index([tradeId])
+  @@index([reviewerId])
+  @@index([reviewedTraderId])
+  @@index([rating])
+  @@index([createdAt])
+  @@map("reviews")
+}
+
+model TradeRating {
+  id                  Int      @id @default(autoincrement())
+  tradeId             Int
+  raterId             Int
+  ratedTraderId       Int
+  communicationRating Int
+  itemConditionRating Int
+  shippingRating      Int
+  overallRating       Int
+  feedback            String?
+  wouldTradeAgain     Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  ratedTrader         User     @relation("RatedTrader", fields: [ratedTraderId], references: [id], onDelete: Cascade)
+  rater               User     @relation("Rater", fields: [raterId], references: [id], onDelete: Cascade)
+  trade               Trade    @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+
+  @@unique([tradeId, raterId])
+  @@index([ratedTraderId])
+  @@index([overallRating])
+  @@index([createdAt])
+  @@map("trade_ratings")
+}
+
+enum TraderTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum BatchStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum RecipientStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+enum ConversationType {
+  DIRECT
+  GROUP
+  TRADE
+  SUPPORT
+}
+
+enum ParticipantRole {
+  MEMBER
+  ADMIN
+  OWNER
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  SYSTEM
+  TRADE_OFFER
+  LOCATION
+  STICKER
+}
+
+enum PaymentType {
+  CARD
+  PAYPAL
+  BANK_ACCOUNT
 }
 
 enum TransactionType {
@@ -508,75 +688,6 @@ enum TransactionStatus {
   REFUNDED
 }
 
-// Trade System Models
-model Item {
-  id                  Int   @id @default(autoincrement())
-  title               String
-  description         String
-  estimatedValue      Decimal  @db.Decimal(10, 2)
-  ownerId             Int
-  isAvailableForTrade Boolean  @default(true)
-  tradePreferences    String?
-  minimumTradeValue   Decimal? @db.Decimal(10, 2)
-  acceptsCashOffers   Boolean  @default(true)
-  isActive            Boolean  @default(true)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  // Relations
-  owner             User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  interests         Interest[]       @relation("ItemInterests")
-  images            ItemImage[]
-  files             ItemFile[]
-  shippingDetails   ShippingDetails?
-  tradesAsOffered   Trade[]          @relation("ItemOffered")
-  tradesAsRequested Trade[]          @relation("ItemRequested")
-
-  @@index([ownerId])
-  @@index([isActive])
-  @@index([isAvailableForTrade])
-  @@map("items")
-}
-
-model ItemImage {
-  id        Int   @id @default(autoincrement())
-  itemId    Int
-  image     String
-  name      String
-  isPrimary Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
-
-  @@index([itemId])
-  @@index([isPrimary])
-  @@map("item_images")
-}
-
-model ItemFile {
-  id          Int   @id @default(autoincrement())
-  itemId      Int
-  file        String
-  name        String
-  fileType    FileType @default(OTHER)
-  fileSize    Int?
-  mimeType    String?
-  description String?
-  isPublic    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
-
-  @@index([itemId])
-  @@index([fileType])
-  @@index([isPublic])
-  @@map("item_files")
-}
-
 enum FileType {
   IMAGE
   DOCUMENT
@@ -589,58 +700,6 @@ enum FileType {
   OTHER
 }
 
-model ShippingDetails {
-  id             Int   @id @default(autoincrement())
-  itemId         Int   @unique
-  shippingWeight Decimal  @db.Decimal(8, 2)
-  length         Decimal  @db.Decimal(6, 2)
-  width          Decimal  @db.Decimal(6, 2)
-  height         Decimal  @db.Decimal(6, 2)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  // Relations
-  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
-
-  @@index([itemId])
-  @@map("shipping_details")
-}
-
-model ShippingAddress {
-  id           Int   @id @default(autoincrement())
-  userId       Int
-  addressLine1 String
-  addressLine2 String?
-  city         String
-  state        String
-  zipCode      String
-  country      String   @default("United States")
-  isDefault    Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([isDefault])
-  @@map("shipping_addresses")
-}
-
-model ShippingPreferences {
-  id               Int   @id @default(autoincrement())
-  userId           Int   @unique
-  preferredCarrier Carrier  @default(USPS)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@map("shipping_preferences")
-}
-
 enum Carrier {
   USPS
   UPS
@@ -649,77 +708,11 @@ enum Carrier {
   OTHER
 }
 
-model PaymentShippingSetup {
-  id             Int         @id @default(autoincrement())
-  userId         Int         @unique
-  shippingMethod ShippingMethod @default(STANDARD)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@map("payment_shipping_setups")
-}
-
 enum ShippingMethod {
   STANDARD
   EXPEDITED
   OVERNIGHT
   PICKUP
-}
-
-model TermsAgreement {
-  id                     Int   @id @default(autoincrement())
-  userId                 Int
-  itemDetailsAccurate    Boolean  @default(false)
-  agreesToTerms          Boolean  @default(false)
-  agreesToEscrow         Boolean  @default(false)
-  understandsFundRelease Boolean  @default(false)
-  ipAddress              String?
-  userAgent              String?
-  termsVersion           String   @default("1.0")
-  createdAt              DateTime @default(now())
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([createdAt])
-  @@index([termsVersion])
-  @@map("terms_agreements")
-}
-
-model Trade {
-  id                  Int      @id @default(autoincrement())
-  traderOfferingId    Int
-  traderReceivingId   Int
-  itemOfferedId       Int
-  itemRequestedId     Int?
-  cashAmount          Decimal?    @db.Decimal(10, 2)
-  status              TradeStatus @default(PENDING)
-  notes               String?
-  escrowReference     String?
-  estimatedCompletion DateTime?
-  createdAt           DateTime    @default(now())
-  acceptedAt          DateTime?
-  completedAt         DateTime?
-  cancelledAt         DateTime?
-
-  // Relations
-  traderOffering  User          @relation("TraderOffering", fields: [traderOfferingId], references: [id], onDelete: Cascade)
-  traderReceiving User          @relation("TraderReceiving", fields: [traderReceivingId], references: [id], onDelete: Cascade)
-  itemOffered     Item          @relation("ItemOffered", fields: [itemOfferedId], references: [id], onDelete: Cascade)
-  itemRequested   Item?         @relation("ItemRequested", fields: [itemRequestedId], references: [id], onDelete: Cascade)
-  reviews         Review[]
-  ratings         TradeRating[]
-
-  @@index([traderOfferingId])
-  @@index([traderReceivingId])
-  @@index([status])
-  @@index([createdAt])
-  @@map("trades")
 }
 
 enum TradeStatus {
@@ -730,54 +723,4 @@ enum TradeStatus {
   COMPLETED
   CANCELLED
   DISPUTED
-}
-
-model Review {
-  id               Int   @id @default(autoincrement())
-  tradeId          Int
-  reviewerId       Int
-  reviewedTraderId Int
-  rating           Int
-  description      String
-  wouldTradeAgain  Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  // Relations
-  trade          Trade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
-  reviewer       User  @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
-  reviewedTrader User  @relation("ReviewedTrader", fields: [reviewedTraderId], references: [id], onDelete: Cascade)
-
-  @@unique([tradeId, reviewerId])
-  @@index([tradeId])
-  @@index([reviewerId])
-  @@index([reviewedTraderId])
-  @@index([rating])
-  @@index([createdAt])
-  @@map("reviews")
-}
-
-model TradeRating {
-  id                  Int   @id @default(autoincrement())
-  tradeId             Int
-  raterId             Int
-  ratedTraderId       Int
-  communicationRating Int
-  itemConditionRating Int
-  shippingRating      Int
-  overallRating       Int
-  feedback            String?
-  wouldTradeAgain     Boolean  @default(true)
-  createdAt           DateTime @default(now())
-
-  // Relations
-  trade       Trade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
-  rater       User  @relation("Rater", fields: [raterId], references: [id], onDelete: Cascade)
-  ratedTrader User  @relation("RatedTrader", fields: [ratedTraderId], references: [id], onDelete: Cascade)
-
-  @@unique([tradeId, raterId])
-  @@index([ratedTraderId])
-  @@index([overallRating])
-  @@index([createdAt])
-  @@map("trade_ratings")
 }

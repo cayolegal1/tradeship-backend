@@ -21,21 +21,30 @@ import {
   ApiBearerAuth,
   ApiBody,
 } from '@nestjs/swagger';
+import { Response } from 'express';
+
+// services
 import { AuthService } from './auth.service';
+
+// decorators
+import { CurrentUser } from './decorators/current-user.decorator';
+
+// guards
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+
+// dtos
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import {
+  // UserResponseDto,
   UserWithProfileResponseDto,
   UserProfileResponseDto,
   AuthResponseDto,
 } from './dto/user-response.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { CurrentUser } from './decorators/current-user.decorator';
 import { SuccessResponseDto } from '../common/dto/response.dto';
-import { Response } from 'express';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -52,8 +61,11 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 409, description: 'User already exists' })
   @ApiBody({ type: RegisterDto })
-  async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
-    return this.authService.register(registerDto);
+  async register(
+    @Body() registerDto: RegisterDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<AuthResponseDto> {
+    return this.authService.register(registerDto, response);
   }
 
   @Post('login')
@@ -68,9 +80,18 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   async login(
     @Body() loginDto: LoginDto,
-    @Res({ passthrough: true }) res: Response,
+    @Res({ passthrough: true }) response: Response,
   ): Promise<AuthResponseDto> {
-    return await this.authService.login(loginDto, res);
+    return await this.authService.login(loginDto, response);
+  }
+
+  @Post('logout')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Logout user' })
+  @ApiResponse({ status: 200, description: 'Logout successful' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async logout(@Res({ passthrough: true }) res: Response) {
+    return this.authService.logout(res);
   }
 
   @Get('user')

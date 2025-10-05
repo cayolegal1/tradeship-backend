@@ -30,11 +30,10 @@ export class GetItemsDto extends PaginationDto {
   trade_type?: number = 0;
 
   @ApiPropertyOptional({
-    description: 'Order items by type (1 = newest, 2 = oldest, etc.)',
-    example: 1,
+    description: 'Order items by type and direction. Format: field:direction',
+    example: 'createdAt:desc',
   })
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  order_by?: number = 1;
+  @IsString()
+  order_by?: string;
 }

@@ -10,7 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { plainToInstance } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import type { Express } from 'express';
+
 // services
 import { PrismaService } from '../common/prisma/prisma.service';
 
@@ -30,6 +30,9 @@ import {
   PaginatedResponseDto,
 } from '../common/dto/pagination.dto';
 import { GetItemsDto } from './dto/get-items.dto';
+
+// helpers
+import { TradeHelpers } from './helpers/trade.helpers';
 
 type UploadedImageMetadata = {
   storagePath: string;
@@ -447,11 +450,17 @@ export class TradeService {
   async getItems(
     itemsDto: GetItemsDto,
   ): Promise<PaginatedResponseDto<ItemResponseDto>> {
-    const { page, limit, skip } = itemsDto;
+    const { page, limit, skip, category, search } = itemsDto;
+
+    const where = TradeHelpers.buildItemWhere({ category, search });
+    const orderBy = TradeHelpers.buildItemOrderBy(itemsDto.order_by);
 
     const [items, total] = await Promise.all([
       this.prisma.item.findMany({
-        where: { isActive: true, isAvailableForTrade: true },
+        where,
+        orderBy,
+        skip,
+        take: limit,
         include: {
           interests: true,
           images: true,
@@ -463,9 +472,6 @@ export class TradeService {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
       }),
       this.prisma.item.count({
         where: { isActive: true, isAvailableForTrade: true },

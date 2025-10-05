@@ -44,6 +44,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { SuccessResponseDto } from '../common/dto/response.dto';
 import { GetItemsDto } from './dto/get-items.dto';
+import { Public } from '@/auth/decorators/public.decorator';
 // import { FileFilterCallback } from 'multer';
 
 @ApiTags('Trading')
@@ -55,6 +56,7 @@ export class TradeController {
 
   // Interest Management
   @Get('interests')
+  @Public()
   @ApiOperation({ summary: 'Get all available interests' })
   @ApiResponse({
     status: 200,
@@ -186,6 +188,7 @@ export class TradeController {
   }
 
   @Get('items')
+  @Public()
   @ApiOperation({ summary: 'Get all available items with pagination' })
   @ApiResponse({
     status: 200,
@@ -212,6 +215,7 @@ export class TradeController {
   }
 
   @Get('items/:id')
+  @Public()
   @ApiOperation({ summary: 'Get item by ID' })
   @ApiResponse({
     status: 200,

@@ -12,6 +12,7 @@ export class TradeHelpers {
     };
 
     const numericCategory = Number(category);
+
     if (!isNaN(numericCategory) && numericCategory > 0) {
       where.interests = { some: { id: numericCategory } };
     }

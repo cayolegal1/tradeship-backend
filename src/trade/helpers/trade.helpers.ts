@@ -1,11 +1,15 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { GetItemsDto } from '../dto/get-items.dto';
 
+interface BuildItemWhereArgs extends Partial<GetItemsDto> {
+  user?: User;
+}
 export class TradeHelpers {
   static buildItemWhere({
     category,
     search,
-  }: Partial<GetItemsDto>): Prisma.ItemWhereInput {
+    user,
+  }: BuildItemWhereArgs): Prisma.ItemWhereInput {
     const where: Prisma.ItemWhereInput = {
       isActive: true,
       isAvailableForTrade: true,
@@ -22,6 +26,12 @@ export class TradeHelpers {
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
       ];
+    }
+
+    if (user) {
+      where.NOT = {
+        ownerId: user.id,
+      };
     }
 
     return where;

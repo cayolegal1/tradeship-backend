@@ -1,6 +1,5 @@
 import { FilesInterceptor } from '@nestjs/platform-express';
 import * as multer from 'multer';
-import type { Express } from 'express';
 import {
   Controller,
   Get,
@@ -25,7 +24,19 @@ import {
   ApiQuery,
   ApiConsumes,
 } from '@nestjs/swagger';
+
+// services
 import { TradeService } from './trade.service';
+
+// decorators
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { Public } from '@/auth/decorators/public.decorator';
+
+// guards
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '@/auth/guards/optional-jwt-auth.guard';
+
+// DTOs
 import { CreateItemDto } from './dto/create-item.dto';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -40,12 +51,9 @@ import {
   PaginationDto,
   PaginatedResponseDto,
 } from '../common/dto/pagination.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { SuccessResponseDto } from '../common/dto/response.dto';
 import { GetItemsDto } from './dto/get-items.dto';
-import { Public } from '@/auth/decorators/public.decorator';
-// import { FileFilterCallback } from 'multer';
+import { User } from '@prisma/client';
 
 @ApiTags('Trading')
 @Controller('trade')
@@ -123,13 +131,13 @@ export class TradeController {
 
   @Get('items')
   @Public()
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'Get all available items with pagination' })
   @ApiResponse({
     status: 200,
     description: 'Items retrieved successfully',
     type: PaginatedResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiQuery({
     name: 'page',
     required: false,
@@ -144,8 +152,9 @@ export class TradeController {
   })
   async getItems(
     @Query() itemsDto: GetItemsDto,
+    @CurrentUser() user?: User,
   ): Promise<PaginatedResponseDto<ItemResponseDto>> {
-    return this.tradeService.getItems(itemsDto);
+    return this.tradeService.getItems(itemsDto, user);
   }
 
   @Get('items/:id')

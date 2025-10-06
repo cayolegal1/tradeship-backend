@@ -33,6 +33,7 @@ import { GetItemsDto } from './dto/get-items.dto';
 
 // helpers
 import { TradeHelpers } from './helpers/trade.helpers';
+import { User } from '@prisma/client';
 
 type UploadedImageMetadata = {
   storagePath: string;
@@ -449,10 +450,11 @@ export class TradeService {
 
   async getItems(
     itemsDto: GetItemsDto,
+    user?: User,
   ): Promise<PaginatedResponseDto<ItemResponseDto>> {
     const { page, limit, skip, category, search } = itemsDto;
 
-    const where = TradeHelpers.buildItemWhere({ category, search });
+    const where = TradeHelpers.buildItemWhere({ category, search, user });
     const orderBy = TradeHelpers.buildItemOrderBy(itemsDto.order_by);
 
     const [items, total] = await Promise.all([

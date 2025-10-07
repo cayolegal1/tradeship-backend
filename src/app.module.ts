@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { NotificationModule } from './notification/notification.module';
 import { PaymentModule } from './payment/payment.module';
 import { TradeModule } from './trade/trade.module';
+import { ChatModule } from './chat/chat.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -26,6 +27,7 @@ import { AppService } from './app.service';
     NotificationModule,
     PaymentModule,
     TradeModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

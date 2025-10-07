@@ -1,14 +1,16 @@
-import { Prisma, User } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { GetItemsDto } from '../dto/get-items.dto';
 
 interface BuildItemWhereArgs extends Partial<GetItemsDto> {
-  user?: User;
+  userId?: number;
+  ownerId?: number;
 }
 export class TradeHelpers {
   static buildItemWhere({
     category,
     search,
-    user,
+    userId,
+    ownerId,
   }: BuildItemWhereArgs): Prisma.ItemWhereInput {
     const where: Prisma.ItemWhereInput = {
       isActive: true,
@@ -28,9 +30,13 @@ export class TradeHelpers {
       ];
     }
 
-    if (user) {
+    // If ownerId is provided, filter by specific owner (for getUserItems)
+    if (ownerId) {
+      where.ownerId = ownerId;
+    } else if (userId) {
+      // If user is provided but no ownerId, exclude user's items (for general search)
       where.NOT = {
-        ownerId: user.id,
+        ownerId: userId,
       };
     }
 

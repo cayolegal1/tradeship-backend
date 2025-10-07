@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -237,6 +238,118 @@ async function main() {
       update: interest,
       create: interest,
     });
+  }
+
+  // Create a default user with 3 items
+  const defaultEmail = 'seed@tradeship.local';
+  const defaultUserPassword = 'password';
+  const hashed = await bcrypt.hash(defaultUserPassword, 10);
+
+  const user = await prisma.user.upsert({
+    where: { email: defaultEmail },
+    update: {
+      username: 'seeduser',
+      firstName: 'Seed',
+      lastName: 'User',
+    },
+    create: {
+      email: defaultEmail,
+      username: 'seeduser',
+      firstName: 'Seed',
+      lastName: 'User',
+      password: hashed,
+      isActive: true,
+      profileCompleted: false,
+    },
+  });
+
+  // Fetch some interests to attach to items
+  const pickedInterests = await prisma.interest.findMany({
+    where: { name: { in: ['Electronics', 'Collectibles', 'Books'] } },
+  });
+
+  // Create 3 sample items for the default user
+  const sampleItems = [
+    {
+      name: 'Vintage Camera',
+      description: 'A well-preserved vintage camera in working condition.',
+      price: 249.99,
+      interests: [
+        pickedInterests.find((i) => i.name === 'Collectibles')?.id,
+      ].filter(Boolean),
+      images: [
+        {
+          storagePath: 'seed/vintage-camera.jpg',
+          url: 'https://picsum.photos/seed/vintage/800/600',
+          originalName: 'vintage-camera.jpg',
+          mimeType: 'image/jpeg',
+          fileSize: 102400,
+          isPrimary: true,
+        },
+      ],
+    },
+    {
+      name: 'iPhone 11 Pro',
+      description: 'Used iPhone 11 Pro, 64GB, very good condition.',
+      price: 399.99,
+      interests: [
+        pickedInterests.find((i) => i.name === 'Electronics')?.id,
+      ].filter(Boolean),
+      images: [
+        {
+          storagePath: 'seed/iphone11pro.jpg',
+          url: 'https://picsum.photos/seed/iphone/800/600',
+          originalName: 'iphone11pro.jpg',
+          mimeType: 'image/jpeg',
+          fileSize: 120000,
+          isPrimary: true,
+        },
+      ],
+    },
+    {
+      name: 'Hardcover Novel Set',
+      description: 'Box set of classic hardcover novels, like new.',
+      price: 79.99,
+      interests: [pickedInterests.find((i) => i.name === 'Books')?.id].filter(
+        Boolean,
+      ),
+      images: [
+        {
+          storagePath: 'seed/novel-set.jpg',
+          url: 'https://picsum.photos/seed/books/800/600',
+          originalName: 'novel-set.jpg',
+          mimeType: 'image/jpeg',
+          fileSize: 80000,
+          isPrimary: true,
+        },
+      ],
+    },
+  ];
+
+  for (const it of sampleItems) {
+    const created = await prisma.item.create({
+      data: {
+        name: it.name,
+        description: it.description,
+        price: it.price,
+        owner: { connect: { id: user.id } },
+        interests: it.interests.length
+          ? { connect: it.interests.map((id: number) => ({ id })) }
+          : undefined,
+        images: {
+          create: it.images.map((img: any) => ({
+            storagePath: img.storagePath,
+            url: img.url,
+            originalName: img.originalName,
+            mimeType: img.mimeType,
+            fileSize: img.fileSize,
+            isPrimary: img.isPrimary,
+          })),
+        },
+      },
+    });
+
+    console.log(`  • Created item: ${created.name} (id=${created.id})`);
   }
 
   console.log('✅ Database seeded successfully!');

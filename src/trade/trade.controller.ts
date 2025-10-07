@@ -88,11 +88,7 @@ export class TradeController {
   async createInterest(
     @Body() body: { name: string; description?: string; color?: string },
   ): Promise<InterestResponseDto> {
-    return this.tradeService.createInterest(
-      body.name,
-      body.description,
-      body.color,
-    );
+    return this.tradeService.createInterest(body.name);
   }
 
   @Post('items')
@@ -126,7 +122,7 @@ export class TradeController {
     );
     const dto = await this.tradeService.prepareCreateItemDto(body);
     // 2) Llamar a tu service con la firma correcta
-    return this.tradeService.createItem(user.id, dto, { images });
+    return this.tradeService.createItem(user.id, dto, images);
   }
 
   @Get('items')
@@ -154,23 +150,7 @@ export class TradeController {
     @Query() itemsDto: GetItemsDto,
     @CurrentUser() user?: User,
   ): Promise<PaginatedResponseDto<ItemResponseDto>> {
-    return this.tradeService.getItems(itemsDto, user);
-  }
-
-  @Get('items/:id')
-  @Public()
-  @ApiOperation({ summary: 'Get item by ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Item retrieved',
-    type: ItemResponseDto,
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Item not found' })
-  async getItemById(
-    @Param('id', ParseIntPipe) itemId: number,
-  ): Promise<ItemResponseDto> {
-    return this.tradeService.getItemById(itemId);
+    return this.tradeService.getItems(itemsDto, user?.id);
   }
 
   @Get('items/my')
@@ -195,9 +175,25 @@ export class TradeController {
   })
   async getUserItems(
     @CurrentUser() user: any,
-    @Query() paginationDto: PaginationDto,
+    @Query() getItemsDto: GetItemsDto,
   ): Promise<PaginatedResponseDto<ItemResponseDto>> {
-    return this.tradeService.getUserItems(user.id, paginationDto);
+    return this.tradeService.getUserItems(user.id, getItemsDto);
+  }
+
+  @Get('items/:id')
+  @Public()
+  @ApiOperation({ summary: 'Get item by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Item retrieved',
+    type: ItemResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Item not found' })
+  async getItemById(
+    @Param('id', ParseIntPipe) itemId: number,
+  ): Promise<ItemResponseDto> {
+    return this.tradeService.getItemById(itemId);
   }
 
   @Put('items/:id')
@@ -276,7 +272,11 @@ export class TradeController {
     @CurrentUser() user: any,
     @Query() paginationDto: PaginationDto,
   ): Promise<PaginatedResponseDto<TradeResponseDto>> {
-    return this.tradeService.getTrades(user.id, paginationDto);
+    return this.tradeService.getTrades(
+      user.id,
+      paginationDto.page,
+      paginationDto.limit,
+    );
   }
 
   @Get('trades/:id')
@@ -309,9 +309,8 @@ export class TradeController {
   async acceptTrade(
     @CurrentUser() user: any,
     @Param('id', ParseIntPipe) tradeId: number,
-  ): Promise<SuccessResponseDto> {
-    const result = await this.tradeService.acceptTrade(tradeId, user.id);
-    return new SuccessResponseDto(result.message);
+  ): Promise<TradeResponseDto> {
+    return this.tradeService.acceptTrade(tradeId, user.id);
   }
 
   @Post('trades/:id/complete')
@@ -328,9 +327,8 @@ export class TradeController {
   async completeTrade(
     @CurrentUser() user: any,
     @Param('id', ParseIntPipe) tradeId: number,
-  ): Promise<SuccessResponseDto> {
-    const result = await this.tradeService.completeTrade(tradeId, user.id);
-    return new SuccessResponseDto(result.message);
+  ): Promise<TradeResponseDto> {
+    return this.tradeService.completeTrade(tradeId, user.id);
   }
 
   @Post('trades/:id/cancel')
@@ -347,13 +345,9 @@ export class TradeController {
   async cancelTrade(
     @CurrentUser() user: any,
     @Param('id', ParseIntPipe) tradeId: number,
-    @Body() body: { reason?: string },
+    // @Body() body: { reason?: string },
   ): Promise<SuccessResponseDto> {
-    const result = await this.tradeService.cancelTrade(
-      tradeId,
-      user.id,
-      body.reason,
-    );
+    const result = await this.tradeService.cancelTrade(tradeId, user.id);
     return new SuccessResponseDto(result.message);
   }
 

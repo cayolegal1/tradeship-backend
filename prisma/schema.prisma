@@ -6,8 +6,8 @@ generator client {
 datasource db {
   provider          = "postgresql"
   url               = env("DATABASE_URL")
-  directUrl         = env("DATABASE_DIRECT_URL")
-  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  // directUrl         = env("DATABASE_DIRECT_URL")
+  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 model User {
@@ -47,6 +47,8 @@ model User {
   ratingsGiven          TradeRating[]                @relation("Rater")
   tradesOffering        Trade[]                      @relation("TraderOffering")
   tradesReceiving       Trade[]                      @relation("TraderReceiving")
+  tradeRequestsSent     TradeRequest[]               @relation("TradeRequestRequester")
+  tradeRequestsReceived TradeRequest[]               @relation("TradeRequestRecipient")
   profile               UserProfile?
   wallet                UserWallet?
 
@@ -412,6 +414,8 @@ model Item {
   shippingDetails     ShippingDetails?
   tradesAsOffered     Trade[]          @relation("ItemOffered")
   tradesAsRequested   Trade[]          @relation("ItemRequested")
+  tradeRequestsAsRequested TradeRequest[] @relation("TradeRequestRequestedItem")
+  tradeRequestsAsProposed TradeRequest[] @relation("TradeRequestProposedItem")
   interests           Interest[]       @relation("ItemInterests")
 
   @@index([ownerId])
@@ -552,6 +556,7 @@ model Trade {
   cancelledAt         DateTime?
   reviews             Review[]
   ratings             TradeRating[]
+  tradeRequest        TradeRequest?
   itemOffered         Item          @relation("ItemOffered", fields: [itemOfferedId], references: [id], onDelete: Cascade)
   itemRequested       Item?         @relation("ItemRequested", fields: [itemRequestedId], references: [id], onDelete: Cascade)
   traderOffering      User          @relation("TraderOffering", fields: [traderOfferingId], references: [id], onDelete: Cascade)
@@ -723,4 +728,40 @@ enum TradeStatus {
   COMPLETED
   CANCELLED
   DISPUTED
+}
+
+enum TradeRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  CANCELLED
+}
+
+model TradeRequest {
+  id                  Int                 @id @default(autoincrement())
+  requesterId         Int
+  recipientId         Int
+  requestedItemId     Int
+  proposedItemId      Int?
+  cashAmount          Decimal?            @db.Decimal(10, 2)
+  message             String?
+  status              TradeRequestStatus   @default(PENDING)
+  expiresAt           DateTime?
+  tradeId             Int?                @unique // Si se convierte en trade
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  respondedAt         DateTime?
+  requester           User                @relation("TradeRequestRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  recipient           User                @relation("TradeRequestRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  requestedItem       Item                @relation("TradeRequestRequestedItem", fields: [requestedItemId], references: [id], onDelete: Cascade)
+  proposedItem        Item?               @relation("TradeRequestProposedItem", fields: [proposedItemId], references: [id], onDelete: Cascade)
+  trade               Trade?              @relation(fields: [tradeId], references: [id], onDelete: SetNull)
+
+  @@index([requesterId])
+  @@index([recipientId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([expiresAt])
+  @@map("trade_requests")
 }

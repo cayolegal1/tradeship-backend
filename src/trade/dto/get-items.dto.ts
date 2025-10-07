@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsOptional, IsString, IsInt } from 'class-validator';
 import { PaginationDto } from '@/common/dto/pagination.dto';
 
@@ -25,6 +25,7 @@ export class GetItemsDto extends PaginationDto {
     example: 0,
   })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @Type(() => Number)
   @IsInt()
   trade_type?: number = 0;
